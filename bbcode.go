@@ -176,7 +176,7 @@ var fonts = map[string]string{
 
 type BBCodeExporter map[string]func(*bbcode.Tag, bool)
 
-func (b BBCodeExpoerter) Open(t *bbcode.Tag) string {
+func (b BBCodeExporter) Open(t *bbcode.Tag) string {
 	return b.export(t, false)
 }
 
