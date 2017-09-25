@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"os"
 	"sync"
 	"time"
@@ -9,40 +8,38 @@ import (
 	"github.com/MJKWoolnough/httpdir"
 )
 
-type Node struct {
-	mu      sync.RWMutex
-	Data    []byte
-	Updated time.Time
+type node struct {
+	mu sync.RWMutex
+	httpdir.Node
 }
 
-func (n *NodeNode) Size() int64 {
+func (n *node) Size() int64 {
 	n.mu.RLock()
-	l := int64(len(n.Data))
+	l := n.Node.Size()
 	n.mu.RUnlock()
 	return l
 }
 
-func (n *Node) Mode() os.FileMode {
-	return os.FileMode
+func (n *node) Mode() os.FileMode {
+	return httpdir.ModeFile
 }
 
-func (n *Node) ModTime() time.Time {
+func (n *node) ModTime() time.Time {
 	n.mu.RLock()
-	t := n.Updated
+	t := n.Node.Mode()
 	n.mu.RUnlock()
 	return t
 }
 
-func (n *Node) Open() (httpdir.File, error) {
+func (n *node) Open() (httpdir.File, error) {
 	n.mu.RLock()
-	f := bytes.NewBuffer(n.Data)
+	f, err := n.Node.Open()
 	n.mu.RUnlock()
-	return f, nil
+	return f, err
 }
 
-func (n *Node) Update(data []byte, t time.Time) {
+func (n *node) Update(data []byte, t time.Time) {
 	n.mu.Lock()
-	n.Data = data
-	n.Updated = t
+	n.Node = httpdir.FileBytes(data, t)
 	n.mu.Unlock()
 }
