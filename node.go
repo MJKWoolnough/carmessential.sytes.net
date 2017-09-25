@@ -1,12 +1,51 @@
 package main
 
 import (
+	"compress/gzip"
 	"os"
 	"sync"
 	"time"
 
 	"github.com/MJKWoolnough/httpdir"
+	"github.com/MJKWoolnough/memio"
 )
+
+var gzipPool = sync.Pool{
+	New: func() interface{} {
+		return gzip.NewWriterLevel(nil, gzip.BestCompression)
+	},
+}
+
+type nodes struct {
+	httpdir.Dir
+
+	mu    sync.Mutex
+	nodes map[string]*node
+}
+
+func (n *nodes) Set(filename string, data []byte) {
+	var gzipped memio.Buffer
+	gw := gzipPool.Get().(*gzip.Writer)
+	gw.Reset(&gzipped)
+	gw.Write(data)
+	gw.Close()
+	gzipPool.Put(gw)
+	t := time.Now()
+	n.mu.Lock()
+	nd, ok := n.nodes[filename]
+	if !ok {
+		nd = new(node)
+		n.Create(filename, nd)
+		n.nodes[filename] = nd
+	}
+	node.Update(data, t)
+	if node, ok := n.nodes[filename+".gz"]; !ok {
+
+	} else {
+		node.Update(data, time.Now())
+	}
+	n.mu.Unlock()
+}
 
 type node struct {
 	mu sync.RWMutex
