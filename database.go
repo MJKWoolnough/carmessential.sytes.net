@@ -11,8 +11,10 @@ import (
 var db database
 
 type database struct {
-	mu sync.Mutex
 	db *sql.DB
+
+	mu         sync.Mutex
+	statements []*sql.Stmt
 }
 
 func SetupDatabase(filename string) error {
@@ -25,74 +27,74 @@ func (d *database) CreateUser(u *User) error {
 	return nil
 }
 
-func (d *database) LoginUser(u *user) error {
+func (d *database) LoginUser(u *User) error {
 	return nil
 }
 
-func (d *database) UpdateUser(u *user) error {
+func (d *database) UpdateUser(u *User) error {
 	return nil
 }
 
-func (d *database) GetUser(u *user) error {
+func (d *database) GetUser(u *User) error {
 	return nil
 }
 
-func (d *database) CreateTreatment(t *treatment) error {
+func (d *database) CreateTreatment(t *Treatment) error {
 	return nil
 }
 
-func (d *database) UpdateTreatment(t *treatment) error {
+func (d *database) UpdateTreatment(t *Treatment) error {
 	return nil
 }
 
-func (d *database) GetTreatment(t *treatment) error {
+func (d *database) GetTreatment(t *Treatment) error {
 	return nil
 }
 
-func (d *database) GetTreatments(tid int) ([]treatment, error) {
+func (d *database) GetTreatments(tid int) ([]Treatment, error) {
 	return nil, nil
 }
 
-func (d *database) CreateProduct(p *product) error {
+func (d *database) CreateProduct(p *Product) error {
 	return nil
 }
 
-func (d *database) UpdateProduct(p *product) error {
+func (d *database) UpdateProduct(p *Product) error {
 	return nil
 }
 
-func (d *database) GetProduct(p *product) error {
+func (d *database) GetProduct(p *Product) error {
 	return nil
 }
 
-func (d *database) GetProducts(pid int) ([]product, error) {
+func (d *database) GetProducts(pid int) ([]Product, error) {
 	return nil, nil
 }
 
-func (d *database) CreateBooking(b *booking) error {
+func (d *database) CreateBooking(b *Booking) error {
 	return nil
 }
 
-func (d *database) GetBooking(b *booking) error {
+func (d *database) GetBooking(b *Booking) error {
 	return nil
 }
 
-func (d *database) UpdateBooking(b *booking) error {
+func (d *database) UpdateBooking(b *Booking) error {
 	return nil
 }
 
-func (d *database) GetBookings(from, to time.Time) ([]booking, error) {
+func (d *database) GetBookings(from, to time.Time) ([]Booking, error) {
 	return nil, nil
 }
 
-func (d *database) CreateVoucher(v *voucher) error {
+func (d *database) CreateVoucher(v *Voucher) error {
 	return nil
 }
 
-func (d *database) GetVoucher(v *voucher) error {
+func (d *database) GetVoucher(v *Voucher) error {
 	return nil
 }
 
-func (d *database) UseVoucher(v *voucher) error {
+func (d *database) UseVoucher(v *Voucher) error {
 	return nil
 }
