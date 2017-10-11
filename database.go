@@ -12,6 +12,13 @@ var db database
 
 const (
 	DBCreateUser = iota
+	DBCreateTreatmentGroup
+	DBCreateTreatment
+	DBCreateProduct
+	DBCreateOrder
+	DBCreateVoucher
+	DBCreateBooking
+	DBCreateOrderedProduct
 	DBTotalStatements
 )
 
@@ -32,10 +39,11 @@ func (d *database) Init(filename string) error {
 		"CREATE TABLE IF NOT EXIST [User]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Name] TEXT NOT NULL, [Email] TEXT NOT NULL, [Password] TEXT NOT NULL);",
 		"CREATE TABLE IF NOT EXIST [TreatmentGroup]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Name] TEXT NOT NULL);",
 		"CREATE TABLE IF NOT EXIST [Treatment]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Name] TEXT NOT NULL, [Description] TEXT NOT NULL, [Group] INTEGER NOT NULL, [Duration] INTEGER NOT NULL, [Price] INTEGER NOT NULL);",
-		"CREATE TABLE IF NOT EXIST [Products]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Name] TEXT NOT NULL, [Description] TEXT NOT NULL, [Price] INTEGER NOT NULL);",
-		"CREATE TABLE IF NOT EXIST [Order]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Basket] TEXT NOT NULL, [Completed] INTEGER NOT NULL, [Status] INTEGER NOT NULL);",
-		"CREATE TABLE IF NOT EXIST [Voucher]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Code] TEXT NOT NULL, [Name] TEXT NOT NULL, [Expiry] INTEGER NOT NULL, [OrderID] INTEGER NOT NULL, [Type] INTEGER NOT NULL, [Value] INTEGER NOT NULL, [Valid] BOOLEAN DEFAULT 0 NOT NULL CHECK ([Valid] IN (0,1));",
+		"CREATE TABLE IF NOT EXIST [Product]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Name] TEXT NOT NULL, [Description] TEXT NOT NULL, [Price] INTEGER NOT NULL);",
+		"CREATE TABLE IF NOT EXIST [Order]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [User] ID INTEGER NOT NULL, [Completed] INTEGER NOT NULL, [Status] INTEGER NOT NULL);",
+		"CREATE TABLE IF NOT EXIST [Voucher]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Code] TEXT NOT NULL, [Name] TEXT NOT NULL, [Expiry] INTEGER NOT NULL, [Order] INTEGER NOT NULL, [Type] INTEGER NOT NULL, [Value] INTEGER NOT NULL, [Valid] BOOLEAN DEFAULT 0 NOT NULL CHECK ([Valid] IN (0,1));",
 		"CREATE TABLE IF NOT EXITS [Booking]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Order] INTEGER NOT NULL, [Treatment] INTEGER NOT NULL, [Time] INTEGER NOT NULL, [Name] TEXT NOT NULL, [EmailAddress] TEXT NOT NULL, [PhoneNumber] TEXT NOT NULL);",
+		"CREATE TABLE IF NOT EXISTS [OrderedProduct]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Order] INTEGER NOT NULL, [Product] INTEGER NOT NULL, [Num] INTEGER NOT NULL);",
 	} {
 		_, err = d.db.Exec(table)
 		if err != nil {
@@ -45,6 +53,13 @@ func (d *database) Init(filename string) error {
 
 	for n, ps := range [TotalStatements]string{
 		"INSERT INTO [User]([Name], [Email], [Password]) VALUES (?, ?, ?);",
+		"INSERT INTO [TreatmentGroup]([Name]) VALUES (?);",
+		"INSERT INTO [Treatment]([Name], [Description], [Group], [Duration], [Price]) VALUES (?, ?, ?, ?, ?);",
+		"INSERT INTO [Product]([Name], [Description], [Price]) VALUES (?, ?, ?);",
+		"INSERT INTO [Order]([User], [Completed]) VALUES (?, ?);",
+		"INSERT INTO [Voucher]([Code], [Name], [Expiry], [Order], [Type], [Value], [Valid]) VALUES (?, ?, ?, ?, ?, ?, 1);",
+		"INSERT INTO [Booking]([Order], [Treatment], [Time], [Name], [EmailAddress], [PhoneNumber]) VALUES (?, ?, ?, ?, ?, ?);",
+		"INSERT INTO [OrderedProduct]([Order], [Product], [Num]) VALUES (?, ?, ?);",
 	} {
 		d.statements[n], err = d.db.Prepare(ps)
 		if err != nil {
