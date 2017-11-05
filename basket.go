@@ -1,67 +1,47 @@
 package main
 
-import "sync"
-
-type Item interface {
-	Price(quantity uint) uint
-	PreProcess() error
-	Process() error
-}
-
-type qItem struct {
-	quantity uint
-	Item
-}
-
-type Discount interface {
-}
-
-type Voucher interface {
-}
+import "time"
 
 type Basket struct {
-	mu        sync.RWMutex
-	Items     []qItem
-	Vouchers  map[string]Voucher
-	Discounts []Discount
+	Items    []Item
+	Vouchers map[string]Voucher
 }
 
-func (b *Basket) ItemAdd(i Item, q uint) bool {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-	for n := range b.Items {
-		if b.Items[n].Item == i {
-			b.Items[n].quantity += q
-			return true
-		}
-	}
-	b.Items = append(b.Items, qItem{
-		quantity: q,
-		Item:     i,
-	})
-	return false
+type Item interface {
 }
 
-func (b *Basket) ItemQuantity(i Item, q uint) bool {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-	for n := range b.Items {
-		if b.Items[n].Item == i {
-			b.Items[n].quantity = q
-			return true
-		}
-	}
-	return false
+type Qty interface {
+	Qty() uint32
+	QtyAdd(uint32) uint32
+	QtySub(uint32) uint32
 }
 
-func (b *Basket) ItemRemove(i Item) bool {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-	for n := range b.Items {
-		if b.Items[n].Item == i {
-			b.Items, b.Items[len(b.Items)-1] = append(b.Items[:n], b.Items[n+1:]...), aItem{}
-			return true
-		}
+type Quantity uint32
+
+func (q Quantity) Qty() uint32 {
+	return q
+}
+
+func (q *Quantity) QtyAdd(diff uint32) uint32 {
+	*q += diff
+	return *q
+}
+
+func (q *Quantity) QtySub(diff uint32) uint32 {
+	if *q <= diff {
+		*q = 0
+		return 0
 	}
-	return false
+	*q -= diff
+	return *q
+}
+
+type Product struct {
+	ID int
+	Quantity
+}
+
+type Service struct {
+	ID   int
+	Time time.Time
 }
