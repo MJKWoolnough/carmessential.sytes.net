@@ -3,11 +3,21 @@ package main
 import "time"
 
 type Basket struct {
-	Items    []Item
-	Vouchers map[string]Voucher
+	Items     []Item
+	Vouchers  map[string]Voucher
+	Discounts map[string]Discount
+}
+
+type Discount interface {
+	Process([]Item) uint
+}
+
+type Voucher interface {
+	Process([]Item) uint
 }
 
 type Item interface {
+	Price() uint
 }
 
 type Qty interface {
@@ -37,11 +47,21 @@ func (q *Quantity) QtySub(diff uint32) uint32 {
 }
 
 type Product struct {
-	ID int
+	ID    int
+	Price uint
 	Quantity
 }
 
+func (p *Product) Price() uint {
+	return p.Price * p.Quantity
+}
+
 type Service struct {
-	ID   int
-	Time time.Time
+	ID    int
+	Time  time.Time
+	Price uint
+}
+
+func (s *Service) Price() uint {
+	return s.Price
 }
