@@ -8,6 +8,14 @@ type Basket struct {
 	Discounts map[string]Discount
 }
 
+func (b *Basket) SubTotal() uint {
+	var total uint
+	for _, i := range b.Items {
+		total += i.Price()
+	}
+	return total
+}
+
 type Discount interface {
 	Process([]Item) uint
 }
@@ -17,6 +25,7 @@ type Voucher interface {
 }
 
 type Item interface {
+	Name() string
 	Price() uint
 }
 
