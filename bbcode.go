@@ -5,7 +5,7 @@ import (
 	"github.com/MJKWoolnough/bbcode/bbcodehtml"
 )
 
-var bbcode = bbc.New(bbcode.HTMLText,
+var bbcode = bbc.New(bbc.HTMLText,
 	bbcodehtml.Align,
 	bbcodehtml.LeftAlign,
 	bbcodehtml.CentreAlign,
