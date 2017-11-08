@@ -38,39 +38,39 @@ type Qty interface {
 type Quantity uint32
 
 func (q Quantity) Qty() uint32 {
-	return q
+	return uint32(q)
 }
 
 func (q *Quantity) QtyAdd(diff uint32) uint32 {
-	*q += diff
-	return *q
+	*q += Quantity(diff)
+	return uint32(*q)
 }
 
 func (q *Quantity) QtySub(diff uint32) uint32 {
-	if *q <= diff {
+	if *q <= Quantity(diff) {
 		*q = 0
 		return 0
 	}
-	*q -= diff
-	return *q
+	*q -= Quantity(diff)
+	return uint32(*q)
 }
 
 type Product struct {
 	ID    int
-	Price uint
+	price uint
 	Quantity
 }
 
 func (p *Product) Price() uint {
-	return p.Price * p.Quantity
+	return p.price * uint(p.Quantity)
 }
 
 type Service struct {
 	ID    int
 	Time  time.Time
-	Price uint
+	price uint
 }
 
 func (s *Service) Price() uint {
-	return s.Price
+	return s.price
 }
