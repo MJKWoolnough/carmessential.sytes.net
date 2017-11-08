@@ -17,6 +17,9 @@ func dbInit(filename string) error {
 	if db.DB, err = sql.Open("sqlite3", filename); err != nil {
 		return err
 	}
+	if err = treatments.init(); err != nil {
+		return err
+	}
 	if err = users.init(); err != nil {
 		return err
 	}
