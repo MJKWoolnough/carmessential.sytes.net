@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"database/sql"
 	"html/template"
+	"sort"
+	"sync"
 	"time"
 )
 
@@ -19,12 +21,32 @@ type Treatment struct {
 	Description template.HTML
 }
 
+type Category struct {
+	ID    uint
+	Name  string
+	Order uint
+}
+
 type Treatments struct {
-	treatments                                     map[uint]*Treatment
-	order                                          []uint
-	categories                                     map[uint]string
 	addTreatment, updateTreatment, removeTreatment *sql.Stmt
 	addCategory, updateCategory, removeCategory    *sql.Stmt
+
+	sync.Mutex
+	treatments                    treatmentMap
+	categories                    categoryMap
+	treatmentOrder, categoryOrder []uint
+}
+
+type treatmentMap map[uint]*Treatment
+
+func (t treatmentMap) order(id uint) uint {
+	return t[id].Order
+}
+
+type categoryMap map[uint]*Category
+
+func (c categoryMap) order(id uint) uint {
+	return c[id].Order
 }
 
 func (t *Treatments) init() error {
@@ -59,6 +81,8 @@ func (t *Treatments) init() error {
 		return err
 	}
 
+	t.treatments = make(treatmentMap)
+
 	var w bytes.Buffer
 	for trows.Next() {
 		var (
@@ -70,7 +94,7 @@ func (t *Treatments) init() error {
 		}
 		bbcode.ConvertString(&w, description)
 		tm.Description = template.HTML(w.String())
-		t.order = append(t.order, tm.ID)
+		t.treatmentOrder = append(t.treatmentOrder, tm.ID)
 		t.treatments[tm.ID] = &tm
 		w.Reset()
 	}
@@ -81,19 +105,52 @@ func (t *Treatments) init() error {
 	crows, err := db.Query("SELECT [ID], [Name] FROM [Category];")
 	if err != nil {
 		return err
+
 	}
+
+	t.categories = make(categoryMap)
+
 	for crows.Next() {
-		var (
-			id   uint
-			name string
-		)
-		if err = crows.Scan(&id, &name); err != nil {
+		var cat Category
+		if err = crows.Scan(&cat.ID, &cat.Name, &cat.Order); err != nil {
 			return err
 		}
-		t.categories[id] = name
+		t.categoryOrder = append(t.categoryOrder, cat.ID)
+		t.categories[cat.ID] = &cat
 	}
 	if err = crows.Close(); err != nil {
 		return err
 	}
+
+	sort.Sort(treatmentSorter{
+		list:           t.treatmentOrder,
+		treatmentOrder: t.treatments,
+	})
+	sort.Sort(treatmentSorter{
+		list:           t.categoryOrder,
+		treatmentOrder: t.categories,
+	})
+
 	return nil
+}
+
+type treatmentOrder interface {
+	order(uint) uint
+}
+
+type treatmentSorter struct {
+	list []uint
+	treatmentOrder
+}
+
+func (t treatmentSorter) Len() int {
+	return len(t.list)
+}
+
+func (t treatmentSorter) Less(i, j int) bool {
+	return t.treatmentOrder.order(t.list[i]) < t.treatmentOrder.order(t.list[j])
+}
+
+func (t treatmentSorter) Swap(i, j int) {
+	t.list[i], t.list[j] = t.list[j], t.list[i]
 }
