@@ -17,22 +17,23 @@ type Users struct {
 	userID, userHash, createUser, updatePassword, updateEmail, getUserName *sql.Stmt
 }
 
-func (u *Users) init() error {
-	db.Lock()
-	defer db.Unlock()
+func (u *Users) init(db *sql.DB) error {
 	_, err := db.Exec("CREATE TABLE IF NOT EXIST [User]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Name] TEXT NOT NULL, [EmailAddress] TEXT NOT NULL, [Password] BLOB NOT NULL);")
 	if err != nil {
 		return err
 	}
-	for stmt, query := range map[**sql.Stmt]string{
-		&u.userID:         "SELECT [ID] FROM [User] WHERE [EmailAddress] = ?;",
-		&u.userHash:       "SELECT [Password] FROM [User] WHERE [ID] = ?;",
-		&u.createUser:     "INSERT INTO [User]([Name], [EmailAddress], [Password]) VALUES (?, ?, ?);",
-		&u.updatePassword: "UPDATE [User] SET [Password] = ? WHERE [ID] = ?;",
-		&u.updateEmail:    "UPDATE [User] SET [EmailAddress] = ? WHERE [ID] = ?;",
-		&u.getUserName:    "SELECT [Name] FROM [User] WHERE [ID] = ?;",
+	for _, stmt := range [...]struct {
+		Stmt  **sql.Stmt
+		Query string
+	}{
+		{&u.userID, "SELECT [ID] FROM [User] WHERE [EmailAddress] = ?;"},
+		{&u.userHash, "SELECT [Password] FROM [User] WHERE [ID] = ?;"},
+		{&u.createUser, "INSERT INTO [User]([Name], [EmailAddress], [Password]) VALUES (?, ?, ?);"},
+		{&u.updatePassword, "UPDATE [User] SET [Password] = ? WHERE [ID] = ?;"},
+		{&u.updateEmail, "UPDATE [User] SET [EmailAddress] = ? WHERE [ID] = ?;"},
+		{&u.getUserName, "SELECT [Name] FROM [User] WHERE [ID] = ?;"},
 	} {
-		*stmt, err = db.Prepare(query)
+		*stmt.Stmt, err = db.Prepare(stmt.Query)
 		if err != nil {
 			return err
 		}

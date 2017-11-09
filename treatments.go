@@ -49,10 +49,7 @@ func (c categoryMap) order(id uint) uint {
 	return c[id].Order
 }
 
-func (t *Treatments) init() error {
-	db.Lock()
-	defer db.Unlock()
-
+func (t *Treatments) init(db *sql.DB) error {
 	_, err := db.Exec("CREATE TABLE IF NOT EXIST [Treatment]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Name] TEXT NOT NULL, [Category] INTEGER NOT NULL, [Price] INTEGER NOT NULL, [Duration] INTEGER NOT NULL, [Description] TEXT NOT NULL, [Order] INTEGER NOT NULL);")
 	if err != nil {
 		return err

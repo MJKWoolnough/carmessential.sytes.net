@@ -13,15 +13,16 @@ var db struct {
 }
 
 func dbInit(filename string) error {
-	var err error
-	if db.DB, err = sql.Open("sqlite3", filename); err != nil {
+	database, err := sql.Open("sqlite3", filename)
+	if err != nil {
 		return err
 	}
-	if err = treatments.init(); err != nil {
+	if err = treatments.init(database); err != nil {
 		return err
 	}
-	if err = users.init(); err != nil {
+	if err = users.init(database); err != nil {
 		return err
 	}
+	db.DB = database
 	return nil
 }
