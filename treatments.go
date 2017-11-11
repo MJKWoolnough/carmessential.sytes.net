@@ -1,12 +1,15 @@
 package main
 
 import (
-	"bytes"
 	"database/sql"
 	"html/template"
+	"net/http"
 	"sort"
+	"strconv"
 	"sync"
 	"time"
+
+	"github.com/MJKWoolnough/memio"
 )
 
 var treatments Treatments
@@ -31,10 +34,11 @@ type Treatments struct {
 	addTreatment, updateTreatment, removeTreatment *sql.Stmt
 	addCategory, updateCategory, removeCategory    *sql.Stmt
 
-	sync.Mutex
+	sync.RWMutex
 	treatments                    treatmentMap
 	categories                    categoryMap
 	treatmentOrder, categoryOrder []uint
+	sidebar, page, admin          template.HTML
 }
 
 type treatmentMap map[uint]*Treatment
@@ -80,7 +84,7 @@ func (t *Treatments) init(db *sql.DB) error {
 
 	t.treatments = make(treatmentMap)
 
-	var w bytes.Buffer
+	buf := make(memio.Buffer, 0, 1<<20)
 	for trows.Next() {
 		var (
 			tm          Treatment
@@ -89,11 +93,11 @@ func (t *Treatments) init(db *sql.DB) error {
 		if err = trows.Scan(&tm.ID, &tm.Name, &tm.Category, &tm.Price, &tm.Duration, &description, &tm.Order); err != nil {
 			return err
 		}
-		bbcode.ConvertString(&w, description)
-		tm.Description = template.HTML(w.String())
+		bbcode.ConvertString(&buf, description)
+		tm.Description = template.HTML(buf)
 		t.treatmentOrder = append(t.treatmentOrder, tm.ID)
 		t.treatments[tm.ID] = &tm
-		w.Reset()
+		buf = buf[:0]
 	}
 	if err = trows.Close(); err != nil {
 		return err
@@ -119,14 +123,7 @@ func (t *Treatments) init(db *sql.DB) error {
 		return err
 	}
 
-	sort.Sort(treatmentSorter{
-		list:           t.treatmentOrder,
-		treatmentOrder: t.treatments,
-	})
-	sort.Sort(treatmentSorter{
-		list:           t.categoryOrder,
-		treatmentOrder: t.categories,
-	})
+	t.generateHTML()
 
 	return nil
 }
@@ -150,4 +147,43 @@ func (t treatmentSorter) Less(i, j int) bool {
 
 func (t treatmentSorter) Swap(i, j int) {
 	t.list[i], t.list[j] = t.list[j], t.list[i]
+}
+
+func (t *Treatments) generateHTML() {
+	sort.Sort(treatmentSorter{
+		list:           t.treatmentOrder,
+		treatmentOrder: t.treatments,
+	})
+	sort.Sort(treatmentSorter{
+		list:           t.categoryOrder,
+		treatmentOrder: t.categories,
+	})
+	// TODO: generate sidebar, page and admin
+}
+
+func (t *Treatments) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	id, err := strconv.ParseUint(r.FormValue("id"), 10, 0)
+	if err != nil {
+		t.ServeCategories(w, r)
+		return
+	}
+	t.RLock()
+	treatment, ok := t.treatments[uint(id)]
+	t.RUnlock()
+	if !ok {
+		t.ServeCategories(w, r)
+		return
+	}
+	// get basket
+	// write template
+}
+
+func (t *Treatments) ServeCategories(w http.ResponseWrite, r *http.Request) {
+
+}
+
+func (t *Treatments) UpdateDescription(id uint, desc string) {
+	buf := make(memio.Buffer, 0, 1<<20)
+	bbcode.ConvertString(&buf, desc)
 }
