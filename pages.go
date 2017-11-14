@@ -14,27 +14,20 @@ type pages struct {
 
 func (p *pages) init(header, loggedIn, loggedOut, preBasket, noBasket, postBasket, footer string) error {
 	var err error
-	if p.header, err = loadFile(header); err != nil {
-		return err
+	for filename, data := range map[string]*[]byte{
+		header:     &p.header,
+		loggedIn:   &p.loggedIn,
+		loggedOut:  &p.loggedOut,
+		preBasket:  &p.preBasket,
+		noBasket:   &p.noBasket,
+		postBasket: &p.postBasket,
+		footer:     &p.footer,
+	} {
+		if *data, err = loadFile(filename); err != nil {
+			return err
+		}
 	}
-	if p.header, err = loadFile(loggedIn); err != nil {
-		return err
-	}
-	if p.header, err = loadFile(loggedOut); err != nil {
-		return err
-	}
-	if p.header, err = loadFile(preBasket); err != nil {
-		return err
-	}
-	if p.header, err = loadFile(noBasket); err != nil {
-		return err
-	}
-	if p.header, err = loadFile(postBasket); err != nil {
-		return err
-	}
-	if p.header, err = loadFile(footer); err != nil {
-		return err
-	}
+	return nil
 }
 
 func loadFile(filename string) ([]byte, error) {
