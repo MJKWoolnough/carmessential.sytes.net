@@ -68,8 +68,6 @@ func (p Page) Output() {
 	if p.ResponseWriter.Header().Get("Content-Type") != "" {
 		p.ResponseWriter.Header().Set("Content-Type", "text/html")
 	}
-	var basket []byte // process basket
-
 	p.ResponseWriter.Write(Pages.header)
 	if p.UserID != 0 {
 		p.ResponseWriter.Write(Pages.loggedIn)
@@ -77,9 +75,12 @@ func (p Page) Output() {
 		p.ResponseWriter.Write(Pages.loggedOut)
 	}
 	p.ResponseWriter.Write(Pages.preBasket)
-	p.ResponseWriter.Write(basket)
+	if p.Basket.IsEmpty() {
+		p.ResponseWriter.Write(Pages.noBasket)
+	} else {
+		p.Basket.WriteTo(p.ResponseWriter)
+	}
 	p.ResponseWriter.Write(Pages.postBasket)
 	p.ResponseWriter.Write(p.Body)
 	p.ResponseWriter.Write(Pages.footer)
-
 }
