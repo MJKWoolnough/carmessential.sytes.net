@@ -1,11 +1,22 @@
 package main
 
-import "time"
+import (
+	"io"
+	"time"
+)
 
 type Basket struct {
 	Items     []Item
 	Vouchers  map[string]Voucher
 	Discounts map[string]Discount
+}
+
+func (b *Basket) IsEmpty() bool {
+	return len(b.Items) == 0
+}
+
+func (b *Basket) WriteTo(w io.Writer) (int, error) {
+	return 0, nil
 }
 
 func (b *Basket) SubTotal() uint {
