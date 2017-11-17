@@ -10,51 +10,55 @@ import (
 	"github.com/MJKWoolnough/sessions"
 )
 
-var loginStore, basketStore *sessions.CookieStore
+var Session sess
 
-func initStores(sessionKey, basketKey []byte, basketTypes ...interface{}) {
-	loginStore, _ = sessions.NewCookieStore(sessionKey, sessions.HTTPOnly(), sessions.Name("session"), sessions.Expiry(time.Hour*24*30))
-	basketStore, _ = sessions.NewCookieStore(basketKey, sessions.HTTPOnly(), sessions.Name("basket"))
+type sess struct {
+	loginStore, basketStore *sessions.CookieStore
+}
+
+func (s *sess) init(sessionKey, basketKey []byte, basketTypes ...interface{}) {
+	s.loginStore, _ = sessions.NewCookieStore(sessionKey, sessions.HTTPOnly(), sessions.Name("session"), sessions.Expiry(time.Hour*24*30))
+	s.basketStore, _ = sessions.NewCookieStore(basketKey, sessions.HTTPOnly(), sessions.Name("basket"))
 	for _, typ := range basketTypes {
 		gob.Register(typ)
 	}
 }
 
-func GetLogin(r *http.Request) uint64 {
-	buf := loginStore.Get(r)
+func (s *sess) GetLogin(r *http.Request) uint64 {
+	buf := s.loginStore.Get(r)
 	if len(buf) != 8 {
 		return 0
 	}
 	return binary.LittleEndian.Uint64(buf)
 }
 
-func SetLogin(w http.ResponseWriter, userID uint64) {
+func (s *sess) SetLogin(w http.ResponseWriter, userID uint64) {
 	var buf [8]byte
 	binary.LittleEndian.PutUint64(buf[:], userID)
-	loginStore.Set(w, buf[:])
+	s.loginStore.Set(w, buf[:])
 }
 
-func ClearLogin(w http.ResponseWriter) {
-	loginStore.Set(w, nil)
+func (s *sess) ClearLogin(w http.ResponseWriter) {
+	s.loginStore.Set(w, nil)
 }
 
-func LoadBasket(r *http.Request) *Basket {
-	buf := memio.Buffer(basketStore.Get(r))
+func (s *sess) LoadBasket(r *http.Request) *Basket {
+	buf := memio.Buffer(s.basketStore.Get(r))
 	basket := new(Basket)
 	if len(buf) == 0 {
 		return basket
 	}
 	gob.NewDecoder(&buf).Decode(basket)
-	basket.Validate()
+	//basket.Validate()
 	return basket
 }
 
-func SaveBasket(w http.ResponseWriter, basket *Basket) {
+func (s *sess) SaveBasket(w http.ResponseWriter, basket *Basket) {
 	var buf memio.Buffer
 	gob.NewEncoder(&buf).Encode(basket)
-	basketStore.Set(w, buf)
+	s.basketStore.Set(w, buf)
 }
 
-func ClearBasket(w http.ResponseWriter) {
-	basketStore.Set(w, nil)
+func (s *sess) ClearBasket(w http.ResponseWriter) {
+	s.basketStore.Set(w, nil)
 }
