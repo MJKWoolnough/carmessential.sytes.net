@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"flag"
 	"log"
 	"os"
@@ -22,12 +21,11 @@ func main() {
 	flag.Parse()
 	logger = log.New(os.Stderr, *logName, log.LstdFlags)
 
-	db, err := sql.Open("sqlite3", *databaseFile)
+	err := dbInit(*databaseFile)
 	if err != nil {
 		log.Printf("error while opening database: %s\n", err)
 		return
 	}
-	defer db.Close()
 
 	// load items from database
 	// load schedule from database
