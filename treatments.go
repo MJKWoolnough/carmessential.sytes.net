@@ -106,7 +106,6 @@ func (t *Treatments) init(db *sql.DB) error {
 	crows, err := db.Query("SELECT [ID], [Name] FROM [Category];")
 	if err != nil {
 		return err
-
 	}
 
 	t.categories = make(categoryMap)
@@ -169,7 +168,7 @@ func (t *Treatments) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	t.RLock()
-	treatment, ok := t.treatments[uint(id)]
+	_, ok := t.treatments[uint(id)]
 	t.RUnlock()
 	if !ok {
 		t.ServeCategories(w, r)
@@ -179,7 +178,7 @@ func (t *Treatments) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// write template
 }
 
-func (t *Treatments) ServeCategories(w http.ResponseWrite, r *http.Request) {
+func (t *Treatments) ServeCategories(w http.ResponseWriter, r *http.Request) {
 
 }
 

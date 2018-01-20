@@ -40,7 +40,7 @@ func loadFile(filename string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	_, err := io.ReadFull(f, buf)
+	_, err = io.ReadFull(f, buf)
 	if err != nil {
 		return nil, err
 	}
@@ -59,8 +59,8 @@ func (p *pages) Start(w http.ResponseWriter, r *http.Request) Page {
 	return Page{
 		ResponseWriter: w,
 		Request:        r,
-		UserID:         session.GetLogin(r),
-		Basket:         session.LoadBasket(r),
+		UserID:         Session.GetLogin(r),
+		Basket:         Session.LoadBasket(r),
 	}
 }
 
