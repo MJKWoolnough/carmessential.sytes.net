@@ -7,12 +7,12 @@ const (
 	VoucherMoney
 )
 
-type Voucher struct {
+type Vouchera struct {
 	VoucherType int
 	Amount      int
 	Treatment   string
 }
 
-func (v *Voucher) WriteTo(w io.Writer) (int64, error) {
+func (v *Vouchera) WriteTo(w io.Writer) (int64, error) {
 	return 0, nil
 }
