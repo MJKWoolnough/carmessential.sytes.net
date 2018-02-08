@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"os"
+
+	"github.com/MJKWoolnough/httpwrap"
 )
 
 var Pages pages
@@ -47,40 +50,82 @@ func loadFile(filename string) ([]byte, error) {
 	return buf, f.Close()
 }
 
-type Page struct {
-	ResponseWriter http.ResponseWriter
-	Request        *http.Request
-	UserID         uint64
-	Basket         *Basket
-	Body           []byte
+type wrappedPage struct {
+	http.Handler
+	writeBasket bool
 }
 
-func (p *pages) Start(w http.ResponseWriter, r *http.Request) Page {
-	return Page{
+func (p *Pages) Wrap(h http.Handler) http.Handler {
+	return wrappedPage{
+		Handler:     h,
+		printBasket: true,
+	}
+}
+
+func (p *Pages) SemiWrap(h http.Handler) http.Handler {
+	return wrappedPage{
+		Handler:     h,
+		writeBasket: false,
+	}
+}
+
+func (wp wrappedPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	userID := Session.GetLogin(r)
+	basket := Session.LoadBasket(r)
+	wBasket := basket
+	if !wp.writeBasket {
+		wBasket = nil
+	}
+	ww := wrappedWriter{
 		ResponseWriter: w,
-		Request:        r,
-		UserID:         Session.GetLogin(r),
-		Basket:         Session.LoadBasket(r),
+		basket:         wBasket,
+		loggedIn:       userID > 0,
+	}
+	wp.Handler.ServeHTTP(
+		httpwrap.Wrap(
+			w,
+			httpwrap.OverrideWriter(ww),
+		),
+		r.WithContext(
+			context.WithValue(
+				context.WithValue(
+					r.Context(),
+					"basket", basket,
+				),
+				"userID", userID,
+			),
+		),
+	)
+	if ww.written {
+		w.Write(Pages.footer)
 	}
 }
 
-func (p Page) Output() {
-	if p.ResponseWriter.Header().Get("Content-Type") != "" {
-		p.ResponseWriter.Header().Set("Content-Type", "text/html")
+type wrappedWriter struct {
+	http.ResponseWriter
+	basket   *Basket
+	loggedIn bool
+	written  bool
+}
+
+func (w *wrappedWriter) Write(p []byte) (int, error) {
+	if !w.written {
+		if w.Header().Get("Content-Type") == "" {
+			w.Header().Set("Content-Type", "text/html")
+		}
+		w.ResponseWriter.Write(Pages.header)
+		if w.loggedIn {
+			w.ResponseWriter.Write(Pages.loggedIn)
+		} else {
+			w.ResponseWriter.Write(Pages.loggedOut)
+		}
+		if p.Basket.IsEmpty() {
+			w.ResponseWriter.Write(Pages.noBasket)
+		} else {
+			w.Basket.WriteTo(w.ResponseWriter)
+		}
+		w.ResponseWriter.Write(Pages.postBasket)
+		w.written = true
 	}
-	p.ResponseWriter.Write(Pages.header)
-	if p.UserID != 0 {
-		p.ResponseWriter.Write(Pages.loggedIn)
-	} else {
-		p.ResponseWriter.Write(Pages.loggedOut)
-	}
-	p.ResponseWriter.Write(Pages.preBasket)
-	if p.Basket.IsEmpty() {
-		p.ResponseWriter.Write(Pages.noBasket)
-	} else {
-		p.Basket.WriteTo(p.ResponseWriter)
-	}
-	p.ResponseWriter.Write(Pages.postBasket)
-	p.ResponseWriter.Write(p.Body)
-	p.ResponseWriter.Write(Pages.footer)
+	return w.ResponseWriter.Write(p)
 }
