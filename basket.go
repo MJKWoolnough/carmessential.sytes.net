@@ -12,7 +12,7 @@ type Basket struct {
 }
 
 func (b *Basket) IsEmpty() bool {
-	return len(b.Items) == 0
+	return b == nil || len(b.Items) == 0
 }
 
 func (b *Basket) WriteTo(w io.Writer) (int, error) {
