@@ -69,6 +69,14 @@ func (p *Pages) SemiWrap(h http.Handler) http.Handler {
 	}
 }
 
+func (p *Pages) StaticFile(filename string) (http.Handler, error) {
+	b, err := loadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	return Page(b), nil
+}
+
 func (wp wrappedPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	userID := Session.GetLogin(r)
 	basket := Session.LoadBasket(r)
@@ -128,4 +136,10 @@ func (w *wrappedWriter) Write(p []byte) (int, error) {
 		w.written = true
 	}
 	return w.ResponseWriter.Write(p)
+}
+
+type Page []byte
+
+func (p Page) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
+	w.Write(p)
 }
