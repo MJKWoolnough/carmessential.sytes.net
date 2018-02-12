@@ -38,7 +38,7 @@ func loadFile(filename string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	buf := make([]byte, 0, fi.Size())
+	buf := make([]byte, fi.Size())
 	f, err := os.Open(filename)
 	if err != nil {
 		return nil, err
@@ -55,21 +55,21 @@ type wrappedPage struct {
 	writeBasket bool
 }
 
-func (p *Pages) Wrap(h http.Handler) http.Handler {
+func (p *pages) Wrap(h http.Handler) http.Handler {
 	return wrappedPage{
 		Handler:     h,
-		printBasket: true,
+		writeBasket: true,
 	}
 }
 
-func (p *Pages) SemiWrap(h http.Handler) http.Handler {
+func (p *pages) SemiWrap(h http.Handler) http.Handler {
 	return wrappedPage{
 		Handler:     h,
 		writeBasket: false,
 	}
 }
 
-func (p *Pages) StaticFile(filename string) (http.Handler, error) {
+func (p *pages) StaticFile(filename string) (http.Handler, error) {
 	b, err := loadFile(filename)
 	if err != nil {
 		return nil, err
@@ -92,7 +92,7 @@ func (wp wrappedPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	wp.Handler.ServeHTTP(
 		httpwrap.Wrap(
 			w,
-			httpwrap.OverrideWriter(ww),
+			httpwrap.OverrideWriter(&ww),
 		),
 		r.WithContext(
 			context.WithValue(
@@ -127,10 +127,10 @@ func (w *wrappedWriter) Write(p []byte) (int, error) {
 		} else {
 			w.ResponseWriter.Write(Pages.loggedOut)
 		}
-		if p.Basket.IsEmpty() {
+		if w.basket.IsEmpty() {
 			w.ResponseWriter.Write(Pages.noBasket)
 		} else {
-			w.Basket.WriteTo(w.ResponseWriter)
+			w.basket.WriteTo(w.ResponseWriter)
 		}
 		w.ResponseWriter.Write(Pages.postBasket)
 		w.written = true
