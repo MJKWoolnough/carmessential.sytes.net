@@ -127,6 +127,7 @@ func (w *wrappedWriter) Write(p []byte) (int, error) {
 		} else {
 			w.ResponseWriter.Write(Pages.loggedOut)
 		}
+		w.ResponseWriter.Write(Pages.preBasket)
 		if w.basket.IsEmpty() {
 			w.ResponseWriter.Write(Pages.noBasket)
 		} else {
