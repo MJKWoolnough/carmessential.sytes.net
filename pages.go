@@ -1,24 +1,24 @@
 package main
 
 import (
-	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
-
-	"github.com/MJKWoolnough/httpwrap"
 )
 
 var Pages pages
 
 type pages struct {
-	header, loggedIn, loggedOut, preBasket, noBasket, postBasket, footer []byte
+	headerA, headerB, headerC, loggedIn, loggedOut, preBasket, noBasket, postBasket, footer []byte
 }
 
-func (p *pages) init(header, loggedIn, loggedOut, preBasket, noBasket, postBasket, footer string) error {
+func (p *pages) init(headerA, headerB, headerC, loggedIn, loggedOut, preBasket, noBasket, postBasket, footer string) error {
 	var err error
 	for filename, data := range map[string]*[]byte{
-		header:     &p.header,
+		headerA:    &p.headerA,
+		headerB:    &p.headerB,
+		headerC:    &p.headerC,
 		loggedIn:   &p.loggedIn,
 		loggedOut:  &p.loggedOut,
 		preBasket:  &p.preBasket,
@@ -50,97 +50,93 @@ func loadFile(filename string) ([]byte, error) {
 	return buf, f.Close()
 }
 
-type wrappedPage struct {
-	http.Handler
-	writeBasket bool
+func (p *pages) WriteHeader(w http.ResponseWriter, r *http.Request, ph PageHeader) {
+	w.Header().Set("Content-Type", "text/html")
+	userID, ok := r.Context().Value("userID").(uint64)
+	if !ok {
+		userID = Session.GetLogin(r)
+	}
+	basket, ok := r.Context().Value("basket").(*Basket)
+	if !ok {
+		basket = Session.LoadBasket(r)
+	}
+	w.Write(p.headerA)
+	w.Write(ph.Title)
+	w.Write(p.headerB)
+	w.Write(ph.Style)
+	w.Write(p.headerC)
+	if userID == 0 {
+		w.Write(p.loggedOut)
+	} else {
+		w.Write(p.loggedIn)
+	}
+	w.Write(p.preBasket)
+	if ph.WriteBasket && !basket.IsEmpty() {
+		basket.WriteTo(w)
+	} else {
+		w.Write(p.noBasket)
+	}
+	w.Write(p.postBasket)
 }
 
-func (p *pages) Wrap(h http.Handler) http.Handler {
-	return wrappedPage{
-		Handler:     h,
-		writeBasket: true,
+func (p *pages) WriteFooter(w http.ResponseWriter) {
+	w.Write(p.footer)
+}
+
+type PageHeader struct {
+	Title, Style []byte
+	WriteBasket  bool
+}
+
+type PageBytes struct {
+	PageHeader
+	Page []byte
+}
+
+func NewPageBytes(title, style string, data []byte, showBasket bool) *PageBytes {
+	return &PageBytes{
+		PageHeader: PageHeader{
+			Title:       []byte(title),
+			Style:       []byte(style),
+			WriteBasket: showBasket,
+		},
+		Page: data,
 	}
 }
 
-func (p *pages) SemiWrap(h http.Handler) http.Handler {
-	return wrappedPage{
-		Handler:     h,
-		writeBasket: false,
+func (p *PageBytes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	Pages.WriteHeader(w, r, p.PageHeader)
+	w.Write(p.Page)
+	Pages.WriteFooter(w)
+}
+
+type PageFile struct {
+	PageHeader
+	Page string
+}
+
+func NewPageFile(title, style, filename string, showBasket bool) *PageFile {
+	return &PageFile{
+		PageHeader: PageHeader{
+			Title:       []byte(title),
+			Style:       []byte(style),
+			WriteBasket: showBasket,
+		},
+		Page: filename,
 	}
 }
 
-func (p *pages) StaticFile(filename string) (http.Handler, error) {
-	b, err := loadFile(filename)
+func (p *PageFile) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	f, err := os.Open(p.Page)
 	if err != nil {
-		return nil, err
+		w.WriteHeader(http.StatusInternalServerError)
 	}
-	return Page(b), nil
-}
-
-func (wp wrappedPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	userID := Session.GetLogin(r)
-	basket := Session.LoadBasket(r)
-	wBasket := basket
-	if !wp.writeBasket {
-		wBasket = nil
+	Pages.WriteHeader(w, r, p.PageHeader)
+	if err != nil {
+		fmt.Fprint(w, err)
+	} else {
+		io.Copy(w, f)
+		f.Close()
 	}
-	ww := wrappedWriter{
-		ResponseWriter: w,
-		basket:         wBasket,
-		loggedIn:       userID > 0,
-	}
-	wp.Handler.ServeHTTP(
-		httpwrap.Wrap(
-			w,
-			httpwrap.OverrideWriter(&ww),
-		),
-		r.WithContext(
-			context.WithValue(
-				context.WithValue(
-					r.Context(),
-					"basket", basket,
-				),
-				"userID", userID,
-			),
-		),
-	)
-	if ww.written {
-		w.Write(Pages.footer)
-	}
-}
-
-type wrappedWriter struct {
-	http.ResponseWriter
-	basket   *Basket
-	loggedIn bool
-	written  bool
-}
-
-func (w *wrappedWriter) Write(p []byte) (int, error) {
-	if !w.written {
-		if w.Header().Get("Content-Type") == "" {
-			w.Header().Set("Content-Type", "text/html")
-		}
-		w.ResponseWriter.Write(Pages.header)
-		if w.loggedIn {
-			w.ResponseWriter.Write(Pages.loggedIn)
-		} else {
-			w.ResponseWriter.Write(Pages.loggedOut)
-		}
-		w.ResponseWriter.Write(Pages.preBasket)
-		if w.basket.IsEmpty() {
-			w.ResponseWriter.Write(Pages.noBasket)
-		} else {
-			w.basket.WriteTo(w.ResponseWriter)
-		}
-		w.ResponseWriter.Write(Pages.postBasket)
-		w.written = true
-	}
-	return w.ResponseWriter.Write(p)
-}
-
-type Page []byte
-
-func (p Page) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
-	w.Write(p)
+	Pages.WriteFooter(w)
 }
