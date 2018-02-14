@@ -56,9 +56,12 @@ func (p *pages) WriteHeader(w http.ResponseWriter, r *http.Request, ph PageHeade
 	if !ok {
 		userID = Session.GetLogin(r)
 	}
-	basket, ok := r.Context().Value("basket").(*Basket)
-	if !ok {
-		basket = Session.LoadBasket(r)
+	var basket *Basket
+	if ph.WriteBasket {
+		basket, ok = r.Context().Value("basket").(*Basket)
+		if !ok {
+			basket = Session.LoadBasket(r)
+		}
 	}
 	w.Write(p.headerA)
 	w.Write(ph.Title)
@@ -71,7 +74,7 @@ func (p *pages) WriteHeader(w http.ResponseWriter, r *http.Request, ph PageHeade
 		w.Write(p.loggedIn)
 	}
 	w.Write(p.preBasket)
-	if ph.WriteBasket && !basket.IsEmpty() {
+	if !basket.IsEmpty() {
 		basket.WriteTo(w)
 	} else {
 		w.Write(p.noBasket)
