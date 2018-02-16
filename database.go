@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"sync"
 
-	_ "github.com/mxk/go-sqlite/sqlite3"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var db struct {
