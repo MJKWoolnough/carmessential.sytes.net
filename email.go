@@ -65,7 +65,10 @@ func (e *email) run() {
 				client = nil
 			}
 			if client == nil {
-				client = smtp.Dial(e.host)
+				client, err = smtp.Dial(e.host)
+				if err != nil {
+					//TODO:handle
+				}
 				client.Auth(e.auth)
 			}
 
