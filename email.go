@@ -14,7 +14,8 @@ type email struct {
 	from    string
 	timeout time.Duration
 
-	send chan sendEmail
+	send  chan sendEmail
+	close chan struct{}
 }
 
 func (e *email) init(host, from string, auth smtp.Auth, timeout time.Duration) {
@@ -23,6 +24,8 @@ func (e *email) init(host, from string, auth smtp.Auth, timeout time.Duration) {
 	e.auth = auth
 	e.timeout = timeout
 	e.send = make(chan sendEmail)
+	e.close = make(chan struct{})
+	go e.run()
 }
 
 type sendEmail struct {
@@ -44,10 +47,18 @@ func (e *email) run() {
 	)
 	for {
 		select {
-		case timer.C:
+		case <-timer.C:
 			client.Quit()
 			client.Close()
 			client = nil
+		case <-e.close:
+			if client != nil {
+				client.Close()
+				if !timer.Stop() {
+					<-timer.C
+				}
+				return
+			}
 		case se := <-e.send:
 			if client != nil && client.Noop() != nil {
 				client.Close()
@@ -88,4 +99,8 @@ func (e *email) run() {
 			timer.Reset(e.timeout)
 		}
 	}
+}
+
+func (e *email) Close() {
+	close(e.close)
 }
