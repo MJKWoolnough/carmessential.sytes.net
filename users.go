@@ -18,7 +18,7 @@ type Users struct {
 }
 
 func (u *Users) init(db *sql.DB) error {
-	_, err := db.Exec("CREATE TABLE IF NOT EXIST [User]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Name] TEXT NOT NULL, [EmailAddress] TEXT NOT NULL, [Password] BLOB NOT NULL);")
+	_, err := db.Exec("CREATE TABLE IF NOT EXISTS [User]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Name] TEXT NOT NULL, [EmailAddress] TEXT NOT NULL, [Password] BLOB NOT NULL);")
 	if err != nil {
 		return err
 	}
@@ -56,9 +56,9 @@ func passwordBuffer(password string) []byte {
 
 func (u *Users) UserID(emailAddress string) (int64, error) {
 	var id int64
-	db.Lock()
+	DB.Lock()
 	err := u.userID.QueryRow(emailAddress).Scan(&id)
-	db.Unlock()
+	DB.Unlock()
 	if err != nil {
 		return 0, err
 	}
@@ -88,12 +88,12 @@ func (u *Users) CreateUser(name, emailAddress, password string) (int64, error) {
 	saltedHash := passwordHash(salt, password)
 
 	var id int64
-	db.Lock()
+	DB.Lock()
 	res, err := u.createUser.Exec(name, emailAddress, saltedHash)
 	if err == nil {
 		id, err = res.LastInsertId()
 	}
-	db.Unlock()
+	DB.Unlock()
 	if err != nil {
 		return 0, err
 	}
@@ -101,17 +101,17 @@ func (u *Users) CreateUser(name, emailAddress, password string) (int64, error) {
 }
 
 func (u *Users) LoginUser(id int64, password string) error {
-	db.Lock()
+	DB.Lock()
 	hash, err := u.UserHash(id)
 	if err == nil {
 		err = comparePassword(password, hash)
 	}
-	db.Unlock()
+	DB.Unlock()
 	return err
 }
 
 func (u *Users) UpdateUserPassword(id int64, oldPassword, newPassword string) error {
-	db.Lock()
+	DB.Lock()
 	saltedHash, err := u.UserHash(id)
 	if err == nil {
 		err = comparePassword(oldPassword, saltedHash)
@@ -120,12 +120,12 @@ func (u *Users) UpdateUserPassword(id int64, oldPassword, newPassword string) er
 			_, err = u.updatePassword.Exec(saltedHash, id)
 		}
 	}
-	db.Unlock()
+	DB.Unlock()
 	return err
 }
 
 func (u *Users) UpdateUserEmail(id int64, emailAddress, password string) error {
-	db.Lock()
+	DB.Lock()
 	saltedHash, err := u.UserHash(id)
 	if err == nil {
 		err = comparePassword(password, saltedHash)
@@ -133,15 +133,15 @@ func (u *Users) UpdateUserEmail(id int64, emailAddress, password string) error {
 			_, err = u.updateEmail.Exec(emailAddress, &id)
 		}
 	}
-	db.Unlock()
+	DB.Unlock()
 	return err
 }
 
 func (u *Users) GetUserName(id int) (string, error) {
 	var username string
-	db.Lock()
+	DB.Lock()
 	err := u.getUserName.QueryRow(id).Scan(&username)
-	db.Unlock()
+	DB.Unlock()
 	if err != nil {
 		return "", err
 	}

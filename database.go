@@ -7,12 +7,14 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var db struct {
+var DB db
+
+type db struct {
 	sync.Mutex
 	*sql.DB
 }
 
-func dbInit(filename string) error {
+func (db *db) init(filename string) error {
 	database, err := sql.Open("sqlite3", filename)
 	if err != nil {
 		return err
@@ -25,4 +27,8 @@ func dbInit(filename string) error {
 	}
 	db.DB = database
 	return nil
+}
+
+func (db *db) Close() error {
+	return db.DB.Close()
 }
