@@ -2,11 +2,21 @@ package main
 
 import (
 	"crypto/tls"
+	"html/template"
 	"io"
 	"net"
 	"net/smtp"
 	"time"
 )
+
+type emailTemplate struct {
+	Template *template.Template
+	Values   interface{}
+}
+
+func (e emailTemplate) WriteTo(w io.Writer) (int64, error) {
+	return 0, e.Template.Execute(w, e.Values)
+}
 
 var Email email
 
