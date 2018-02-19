@@ -1,7 +1,9 @@
 package main
 
 import (
+	"crypto/tls"
 	"io"
+	"net"
 	"net/smtp"
 	"time"
 )
@@ -57,8 +59,9 @@ func (e *email) run() {
 				if !timer.Stop() {
 					<-timer.C
 				}
-				return
 			}
+			close(e.close)
+			return
 		case se := <-e.send:
 			if client != nil && client.Noop() != nil {
 				client.Close()
@@ -68,31 +71,50 @@ func (e *email) run() {
 				client, err = smtp.Dial(e.host)
 				if err != nil {
 					//TODO:handle
+					continue
 				}
-				client.Auth(e.auth)
+				host, _, _ := net.SplitHostPort(e.host)
+				err = client.StartTLS(&tls.Config{ServerName: host})
+				if err != nil {
+					client.Close()
+					client = nil
+					//TODO:handle
+					continue
+				}
+				err = client.Auth(e.auth)
+				if err != nil {
+					client.Close()
+					client = nil
+					//TODO:handle
+					continue
+				}
 			}
 
 			err = client.Mail(e.from)
 			if err != nil {
 				client.Reset()
 				//TODO:handle
+				continue
 			}
 
 			err = client.Rcpt(se.to)
 			if err != nil {
 				client.Reset()
 				//TODO:handle
+				continue
 			}
 
 			wc, err := client.Data()
 			if err != nil {
 				client.Reset()
 				//TODO:handle
+				continue
 			}
 			_, err = se.data.WriteTo(wc)
 			if err != nil {
 				client.Reset()
 				//TODO:handle
+				continue
 			}
 			wc.Close()
 
@@ -105,5 +127,6 @@ func (e *email) run() {
 }
 
 func (e *email) Close() {
-	close(e.close)
+	e.close <- struct{}{}
+	<-e.close
 }
