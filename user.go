@@ -4,9 +4,11 @@ import (
 	"encoding/base64"
 	"html/template"
 	"net/http"
+	"net/smtp"
 	"time"
 
 	"github.com/MJKWoolnough/authenticate"
+	"github.com/MJKWoolnough/memio"
 )
 
 var User user
@@ -109,10 +111,9 @@ func (u *user) Register(w http.ResponseWriter, r *http.Request) {
 			if isValidEmail(form.Email) {
 				form.Code = base64.StdEncoding.EncodeToString(u.registerCodec.Encode([]byte(form.Email), make([]byte, 0, len(form.Email)+u.registerCodec.Overhead())))
 				form.From = u.from
-				Email.Send(form.Email, emailTemplate{u.emailT, form})
-				//u.emailT.Execute(e, form)
-
-				// send email
+				var msg memio.Buffer
+				u.emailT.Execute(&msg, form)
+				smtp.SendMail(form.Email, msg)
 				form.Stage = 1
 			} else {
 				form.Error = "Invalid Email Address"
