@@ -1,142 +1,21 @@
 package main
 
-import (
-	"crypto/tls"
-	"html/template"
-	"io"
-	"net"
-	"net/smtp"
-	"time"
-)
-
-type emailTemplate struct {
-	Template *template.Template
-	Values   interface{}
-}
-
-func (e emailTemplate) WriteTo(w io.Writer) (int64, error) {
-	return 0, e.Template.Execute(w, e.Values)
-}
+import "net/smtp"
 
 var Email email
 
 type email struct {
-	host    string
-	auth    smtp.Auth
-	from    string
-	timeout time.Duration
-
-	send  chan sendEmail
-	close chan struct{}
+	addr string
+	auth smtp.Auth
+	from string
 }
 
-func (e *email) init(host, from string, auth smtp.Auth, timeout time.Duration) {
-	e.host = host
-	e.from = from
+func (e *email) init(addr string, auth smtp.Auth, from string) {
+	e.addr = addr
 	e.auth = auth
-	e.timeout = timeout
-	e.send = make(chan sendEmail)
-	e.close = make(chan struct{})
-	go e.run()
+	e.from = from
 }
 
-type sendEmail struct {
-	to   string
-	data io.WriterTo
-}
-
-func (e *email) Send(to string, data io.WriterTo) {
-	e.send <- sendEmail{to, data}
-}
-
-// runs in its own goroutine
-func (e *email) run() {
-	timer := time.NewTimer(time.Hour)
-	timer.Stop()
-	var (
-		client *smtp.Client
-		err    error
-	)
-	for {
-		select {
-		case <-timer.C:
-			client.Quit()
-			client.Close()
-			client = nil
-		case <-e.close:
-			if client != nil {
-				client.Close()
-				if !timer.Stop() {
-					<-timer.C
-				}
-			}
-			close(e.close)
-			return
-		case se := <-e.send:
-			if client != nil && client.Noop() != nil {
-				client.Close()
-				client = nil
-			}
-			if client == nil {
-				client, err = smtp.Dial(e.host)
-				if err != nil {
-					//TODO:handle
-					continue
-				}
-				host, _, _ := net.SplitHostPort(e.host)
-				err = client.StartTLS(&tls.Config{ServerName: host})
-				if err != nil {
-					client.Close()
-					client = nil
-					//TODO:handle
-					continue
-				}
-				err = client.Auth(e.auth)
-				if err != nil {
-					client.Close()
-					client = nil
-					//TODO:handle
-					continue
-				}
-			}
-
-			err = client.Mail(e.from)
-			if err != nil {
-				client.Reset()
-				//TODO:handle
-				continue
-			}
-
-			err = client.Rcpt(se.to)
-			if err != nil {
-				client.Reset()
-				//TODO:handle
-				continue
-			}
-
-			wc, err := client.Data()
-			if err != nil {
-				client.Reset()
-				//TODO:handle
-				continue
-			}
-			_, err = se.data.WriteTo(wc)
-			if err != nil {
-				client.Reset()
-				//TODO:handle
-				continue
-			}
-			wc.Close()
-
-			if !timer.Stop() {
-				<-timer.C
-			}
-			timer.Reset(e.timeout)
-		}
-	}
-}
-
-func (e *email) Close() {
-	e.close <- struct{}{}
-	<-e.close
+func (e *email) Send(to string, msg []byte) error {
+	return smtp.SendMail(e.addr, e.auth, e.from, []string{to}, msg)
 }
