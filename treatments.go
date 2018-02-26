@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"html/template"
 	"net/http"
 	"sort"
@@ -21,7 +22,7 @@ type Treatment struct {
 	Price       uint
 	Duration    time.Duration
 	Order       uint
-	Description template.HTML
+	Description PageBytes
 }
 
 type Category struct {
@@ -54,12 +55,14 @@ func (c categoryMap) order(id uint) uint {
 }
 
 func (t *Treatments) init(db *sql.DB) error {
-	_, err := db.Exec("CREATE TABLE IF NOT EXIST [Treatment]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Name] TEXT NOT NULL, [Category] INTEGER NOT NULL, [Price] INTEGER NOT NULL, [Duration] INTEGER NOT NULL, [Description] TEXT NOT NULL, [Order] INTEGER NOT NULL);")
+	_, err := db.Exec("CREATE TABLE IF NOT EXISTS [Treatment]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Name] TEXT NOT NULL, [Category] INTEGER NOT NULL, [Price] INTEGER NOT NULL, [Duration] INTEGER NOT NULL, [Description] TEXT NOT NULL, [Order] INTEGER NOT NULL);")
 	if err != nil {
+		fmt.Println(1)
 		return err
 	}
-	_, err = db.Exec("CREATE TABLE IF NOT EXIST [Category]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Name] TEXT NOT NULL);")
+	_, err = db.Exec("CREATE TABLE IF NOT EXISTS [Category]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Name] TEXT NOT NULL);")
 	if err != nil {
+		fmt.Println(2)
 		return err
 	}
 
@@ -94,7 +97,7 @@ func (t *Treatments) init(db *sql.DB) error {
 			return err
 		}
 		bbcode.ConvertString(&buf, description)
-		tm.Description = template.HTML(buf)
+		//tm.Description = template.HTML(buf)
 		t.treatmentOrder = append(t.treatmentOrder, tm.ID)
 		t.treatments[tm.ID] = &tm
 		buf = buf[:0]
@@ -168,14 +171,14 @@ func (t *Treatments) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	t.RLock()
-	_, ok := t.treatments[uint(id)]
+	p, ok := t.treatments[uint(id)]
+	_ = p
 	t.RUnlock()
 	if !ok {
 		t.ServeCategories(w, r)
 		return
 	}
-	// get basket
-	// write template
+
 }
 
 func (t *Treatments) ServeCategories(w http.ResponseWriter, r *http.Request) {
