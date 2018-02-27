@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"html/template"
 	"net/http"
-	"net/smtp"
 	"time"
 
 	"github.com/MJKWoolnough/authenticate"
@@ -113,7 +112,7 @@ func (u *user) Register(w http.ResponseWriter, r *http.Request) {
 				form.From = u.from
 				var msg memio.Buffer
 				u.emailT.Execute(&msg, form)
-				smtp.SendMail(form.Email, msg)
+				Email.Send(form.Email, msg)
 				form.Stage = 1
 			} else {
 				form.Error = "Invalid Email Address"
