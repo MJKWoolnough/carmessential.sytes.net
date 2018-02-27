@@ -10,7 +10,7 @@ type email struct {
 	from string
 }
 
-func (e *email) init(addr string, auth smtp.Auth, from string) {
+func (e *email) init(addr, from string, auth smtp.Auth) {
 	e.addr = addr
 	e.auth = auth
 	e.from = from
