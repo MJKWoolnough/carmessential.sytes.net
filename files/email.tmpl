@@ -1,5 +1,19 @@
 To: {{.Email}}
 From: {{.From}}
 Subject: CARMEssential Registration
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary=boundary
+
+--boundary
+Content-Type: text/plain; charset=utf-8
+
+Please copy and paste the following into your address bar:
+
+http://carmessential.sytes.net/register.html?code={{.Code}}
+
+--boundary
+Content-Type: text/html; charset=utf-8
 
 <a href="http://carmessential.sytes.net/register.html?code={{.Code}}">Click Here</a>
+
+--boundary--
