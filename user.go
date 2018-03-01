@@ -61,11 +61,11 @@ var registerPH = PageHeader{
 }
 
 func isValidPassword(password string) bool {
-	return true
+	return len(password) > 0
 }
 
 func isValidEmail(email string) bool {
-	return true
+	return len(email) > 0
 }
 
 func (u *user) Register(w http.ResponseWriter, r *http.Request) {
@@ -88,9 +88,8 @@ func (u *user) Register(w http.ResponseWriter, r *http.Request) {
 			} else {
 				form.Email = string(email)
 				form.Stage = 2
-				pass := r.Form.Get("password")
-				if pass != "" {
-					if pass == r.Form.Get("confirmPassword") {
+				if _, ok := r.Form["password"]; ok {
+					if pass := r.Form.Get("password"); pass == r.Form.Get("confirmPassword") {
 						if isValidPassword(pass) {
 							// set db
 							http.Redirect(w, r, "/user/", http.StatusFound)
@@ -106,17 +105,15 @@ func (u *user) Register(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		form.Email = r.Form.Get("email")
-		if form.Email != "" {
-			if isValidEmail(form.Email) {
-				form.Code = base64.StdEncoding.EncodeToString(u.registerCodec.Encode([]byte(form.Email), make([]byte, 0, len(form.Email)+u.registerCodec.Overhead())))
-				form.From = u.from
-				var msg memio.Buffer
-				u.emailT.Execute(&msg, form)
-				Email.Send(form.Email, msg)
-				form.Stage = 1
-			} else {
-				form.Error = "Invalid Email Address"
-			}
+		if isValidEmail(form.Email) {
+			form.Code = base64.StdEncoding.EncodeToString(u.registerCodec.Encode([]byte(form.Email), make([]byte, 0, len(form.Email)+u.registerCodec.Overhead())))
+			form.From = u.from
+			var msg memio.Buffer
+			u.emailT.Execute(&msg, form)
+			Email.Send(form.Email, msg)
+			form.Stage = 1
+		} else if _, ok := r.Form["email"]; ok {
+			form.Error = "Invalid Email Address"
 		}
 	}
 	Pages.WriteHeader(w, r, registerPH)
