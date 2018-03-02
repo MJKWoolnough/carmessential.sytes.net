@@ -87,25 +87,31 @@ func (u *user) Register(w http.ResponseWriter, r *http.Request) {
 				form.Code = ""
 			} else {
 				form.Email = string(email)
-				form.Stage = 2
-				if _, ok := r.Form["password"]; ok {
-					if pass := r.Form.Get("password"); pass == r.Form.Get("confirmPassword") {
-						if isValidPassword(pass) {
-							// set db
-							http.Redirect(w, r, "/user/", http.StatusFound)
-							return
+				if id, _ := Users.UserID(form.Email); id > 0 {
+					form.Error = "Email address already registered"
+				} else {
+					form.Stage = 2
+					if _, ok := r.Form["password"]; ok {
+						if pass := r.Form.Get("password"); pass == r.Form.Get("confirmPassword") {
+							if isValidPassword(pass) {
+								// set db
+								http.Redirect(w, r, "/user/", http.StatusFound)
+								return
+							} else {
+								form.Error = "Invalid Password"
+							}
 						} else {
-							form.Error = "Invalid Password"
+							form.Error = "Passwords do not match"
 						}
-					} else {
-						form.Error = "Passwords do not match"
 					}
 				}
 			}
 		}
 	} else {
 		form.Email = r.Form.Get("email")
-		if isValidEmail(form.Email) {
+		if id, _ := Users.UserID(form.Email); id > 0 {
+			form.Error = "Email address already registered"
+		} else if isValidEmail(form.Email) {
 			form.Code = base64.StdEncoding.EncodeToString(u.registerCodec.Encode([]byte(form.Email), make([]byte, 0, len(form.Email)+u.registerCodec.Overhead())))
 			form.From = u.from
 			var msg memio.Buffer
