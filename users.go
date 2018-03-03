@@ -18,7 +18,7 @@ type Users struct {
 }
 
 func (u *Users) init(db *sql.DB) error {
-	_, err := db.Exec("CREATE TABLE IF NOT EXISTS [User]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Name] TEXT NOT NULL, [EmailAddress] TEXT NOT NULL, [Password] BLOB NOT NULL);")
+	_, err := db.Exec("CREATE TABLE IF NOT EXISTS [User]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Name] TEXT NOT NULL, [EmailAddress] TEXT NOT NULL, [Password] BLOB NOT NULL, [Phone] TEXT NOT NULL DEFAULT '');")
 	if err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func comparePassword(password string, saltedHash []byte) error {
 	return nil
 }
 
-func (u *Users) CreateUser(name, emailAddress, password string) (int64, error) {
+func (u *Users) CreateUser(name, emailAddress, password, phone string) (int64, error) {
 	salt := sql.RawBytes(passwordBuffer(password))
 	for n := range salt {
 		salt[n] = byte(rand.Intn(256))
@@ -89,7 +89,7 @@ func (u *Users) CreateUser(name, emailAddress, password string) (int64, error) {
 
 	var id int64
 	DB.Lock()
-	res, err := u.createUser.Exec(name, emailAddress, saltedHash)
+	res, err := u.createUser.Exec(name, emailAddress, saltedHash, phone)
 	if err == nil {
 		id, err = res.LastInsertId()
 	}

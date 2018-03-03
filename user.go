@@ -68,6 +68,10 @@ func isValidEmail(email string) bool {
 	return len(email) > 0
 }
 
+func isValidPhone(phone string) bool {
+	return true
+}
+
 func (u *user) Register(w http.ResponseWriter, r *http.Request) {
 	if Session.GetLogin(r) > 0 {
 		http.Redirect(w, r, "/user/", http.StatusFound)
@@ -75,8 +79,8 @@ func (u *user) Register(w http.ResponseWriter, r *http.Request) {
 	}
 	r.ParseForm()
 	var form struct {
-		Email, Code, Error, From string
-		Stage                    int
+		Email, Code, Error, From, Name, NameError, Phone, PhoneError string
+		Stage                                                        int
 	}
 	form.Code = r.Form.Get("code")
 	if form.Code != "" {
@@ -92,9 +96,18 @@ func (u *user) Register(w http.ResponseWriter, r *http.Request) {
 				} else {
 					form.Stage = 2
 					if _, ok := r.Form["password"]; ok {
+						form.Name = r.Form.Get("name")
+						if form.Name == "" {
+							form.NameError = "Need your Name"
+						}
+						form.Phone = r.Form.Get("phone")
+						if !isValidPhone(form.Phone) {
+							form.PhoneError = "Invalid Phone Number"
+						}
 						if pass := r.Form.Get("password"); pass == r.Form.Get("confirmPassword") {
 							if isValidPassword(pass) {
-								// set db
+								id, _ := users.CreateUser(form.Name, form.Email, pass, form.Phone)
+								Session.SetLogin(w, id)
 								http.Redirect(w, r, "/user/", http.StatusFound)
 								return
 							} else {

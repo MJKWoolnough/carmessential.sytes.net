@@ -1,0 +1,18 @@
+{{if eq .Stage 0}}
+			<form action="?" method="post">
+				<label for="email">Email Address</label><input type="email" id="email" name="email" value="{{.Email}}" />{{if ne .Error ""}}<div class="error">{{.Error}}</div>{{end}}<br />
+				<input type="submit" value="Register" />
+			</form>
+{{else if eq .Stage 1}}
+			An E-mail has been sent to {{.Email}}.
+{{else if eq .Stage 2}}
+			<form action="?" method="post">
+				<label>Email Address</label><span>{{.Email}}</span><br />
+				<input type="hidden" name="code" value="{{.Code}}" />
+				<label for="password">Password</label><input type="password" id="password" name="password" />{{if ne .Error ""}}<div class="error">{{.Error}}</div>{{end}}<br />
+				<label for="confirmPassword">Confirm Password</label><input type="password" id="confirmPassword" name="confirmPassword" /><br />
+				<label for="name">Name</label><input type="text" id="name" name="name" value="{{.Name}}" />{{if ne .NameError ""}}<div class="error">{{.NameError}}</div>{{end}}<br />
+				<label for="phone">Phone Number (optional)</label><input type="text" id="phone" name="phone" value="{{.Phone}}" />{{if ne .PhoneError ""}}<div class="error">{{.PhoneError}}</div>{{end}}<br />
+				<input type="submit" value="Register" />
+			</form>
+{{end}}
