@@ -1,12 +1,17 @@
 package main
 
-import "database/sql"
+import (
+	"database/sql"
+	"sync"
+)
 
 var Config config
 
 type config struct {
-	data           map[string]string
 	update, insert *sql.Stmt
+
+	lock sync.RWMutex
+	data map[string]string
 }
 
 func (c *config) init(db *sql.DB) error {
@@ -35,10 +40,14 @@ func (c *config) init(db *sql.DB) error {
 }
 
 func (c *config) Get(key string) string {
-	return c.data[key]
+	c.lock.RLock()
+	value := c.data[key]
+	c.lock.RUnlock()
+	return value
 }
 
 func (c *config) Set(key, value string) {
+	c.lock.Lock()
 	DB.Lock()
 	if _, ok := c.data[key]; ok {
 		c.update.Exec(value, key)
@@ -46,4 +55,6 @@ func (c *config) Set(key, value string) {
 		c.insert.Exec(key, value)
 	}
 	DB.Unlock()
+	c.data[key] = value
+	c.lock.Unlock()
 }
