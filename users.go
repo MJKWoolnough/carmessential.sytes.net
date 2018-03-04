@@ -11,13 +11,13 @@ import (
 
 const saltLength = 16
 
-var users Users
+var Users users
 
-type Users struct {
+type users struct {
 	userID, userHash, createUser, updatePassword, updateEmail, getUserName *sql.Stmt
 }
 
-func (u *Users) init(db *sql.DB) error {
+func (u *users) init(db *sql.DB) error {
 	_, err := db.Exec("CREATE TABLE IF NOT EXISTS [User]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Name] TEXT NOT NULL, [EmailAddress] TEXT NOT NULL, [Password] BLOB NOT NULL, [Phone] TEXT NOT NULL DEFAULT '');")
 	if err != nil {
 		return err
@@ -54,7 +54,7 @@ func passwordBuffer(password string) []byte {
 	return make([]byte, saltLength, saltLength+l)
 }
 
-func (u *Users) UserID(emailAddress string) (int64, error) {
+func (u *users) UserID(emailAddress string) (int64, error) {
 	var id int64
 	DB.Lock()
 	err := u.userID.QueryRow(emailAddress).Scan(&id)
@@ -65,7 +65,7 @@ func (u *Users) UserID(emailAddress string) (int64, error) {
 	return id, nil
 }
 
-func (u *Users) UserHash(id int64) (sql.RawBytes, error) {
+func (u *users) UserHash(id int64) (sql.RawBytes, error) {
 	passHash := make(sql.RawBytes, saltLength, saltLength+sha256.Size)
 	err := u.userHash.QueryRow(id).Scan(&passHash)
 	return passHash, err
@@ -80,7 +80,7 @@ func comparePassword(password string, saltedHash []byte) error {
 	return nil
 }
 
-func (u *Users) CreateUser(name, emailAddress, password, phone string) (int64, error) {
+func (u *users) CreateUser(name, emailAddress, password, phone string) (int64, error) {
 	salt := sql.RawBytes(passwordBuffer(password))
 	for n := range salt {
 		salt[n] = byte(rand.Intn(256))
@@ -100,7 +100,7 @@ func (u *Users) CreateUser(name, emailAddress, password, phone string) (int64, e
 	return id, nil
 }
 
-func (u *Users) LoginUser(id int64, password string) error {
+func (u *users) LoginUser(id int64, password string) error {
 	DB.Lock()
 	hash, err := u.UserHash(id)
 	if err == nil {
@@ -110,7 +110,7 @@ func (u *Users) LoginUser(id int64, password string) error {
 	return err
 }
 
-func (u *Users) UpdateUserPassword(id int64, oldPassword, newPassword string) error {
+func (u *users) UpdateUserPassword(id int64, oldPassword, newPassword string) error {
 	DB.Lock()
 	saltedHash, err := u.UserHash(id)
 	if err == nil {
@@ -124,7 +124,7 @@ func (u *Users) UpdateUserPassword(id int64, oldPassword, newPassword string) er
 	return err
 }
 
-func (u *Users) UpdateUserEmail(id int64, emailAddress, password string) error {
+func (u *users) UpdateUserEmail(id int64, emailAddress, password string) error {
 	DB.Lock()
 	saltedHash, err := u.UserHash(id)
 	if err == nil {
@@ -137,7 +137,7 @@ func (u *Users) UpdateUserEmail(id int64, emailAddress, password string) error {
 	return err
 }
 
-func (u *Users) GetUserName(id int) (string, error) {
+func (u *users) GetUserName(id int) (string, error) {
 	var username string
 	DB.Lock()
 	err := u.getUserName.QueryRow(id).Scan(&username)

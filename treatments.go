@@ -13,7 +13,7 @@ import (
 	"github.com/MJKWoolnough/memio"
 )
 
-var treatments Treatments
+var Treatments treatments
 
 type Treatment struct {
 	ID          uint
@@ -31,7 +31,7 @@ type Category struct {
 	Order uint
 }
 
-type Treatments struct {
+type treatments struct {
 	addTreatment, updateTreatment, removeTreatment *sql.Stmt
 	addCategory, updateCategory, removeCategory    *sql.Stmt
 
@@ -54,7 +54,7 @@ func (c categoryMap) order(id uint) uint {
 	return c[id].Order
 }
 
-func (t *Treatments) init(db *sql.DB) error {
+func (t *treatments) init(db *sql.DB) error {
 	_, err := db.Exec("CREATE TABLE IF NOT EXISTS [Treatment]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Name] TEXT NOT NULL, [Category] INTEGER NOT NULL, [Price] INTEGER NOT NULL, [Duration] INTEGER NOT NULL, [Description] TEXT NOT NULL, [Order] INTEGER NOT NULL);")
 	if err != nil {
 		fmt.Println(1)
@@ -151,7 +151,7 @@ func (t treatmentSorter) Swap(i, j int) {
 	t.list[i], t.list[j] = t.list[j], t.list[i]
 }
 
-func (t *Treatments) generateHTML() {
+func (t *treatments) generateHTML() {
 	sort.Sort(treatmentSorter{
 		list:           t.treatmentOrder,
 		treatmentOrder: t.treatments,
@@ -163,7 +163,7 @@ func (t *Treatments) generateHTML() {
 	// TODO: generate sidebar, page and admin
 }
 
-func (t *Treatments) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (t *treatments) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	id, err := strconv.ParseUint(r.FormValue("id"), 10, 0)
 	if err != nil {
@@ -181,11 +181,11 @@ func (t *Treatments) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (t *Treatments) ServeCategories(w http.ResponseWriter, r *http.Request) {
+func (t *treatments) ServeCategories(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (t *Treatments) UpdateDescription(id uint, desc string) {
+func (t *treatments) UpdateDescription(id uint, desc string) {
 	buf := make(memio.Buffer, 0, 1<<20)
 	bbcode.ConvertString(&buf, desc)
 }

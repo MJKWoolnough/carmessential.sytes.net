@@ -19,10 +19,13 @@ func (db *db) init(filename string) error {
 	if err != nil {
 		return err
 	}
-	if err = treatments.init(database); err != nil {
+	if err = Config.init(database); err != nil {
 		return err
 	}
-	if err = users.init(database); err != nil {
+	if err = Treatments.init(database); err != nil {
+		return err
+	}
+	if err = Users.init(database); err != nil {
 		return err
 	}
 	db.DB = database

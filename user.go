@@ -106,7 +106,7 @@ func (u *user) Register(w http.ResponseWriter, r *http.Request) {
 						}
 						if pass := r.Form.Get("password"); pass == r.Form.Get("confirmPassword") {
 							if isValidPassword(pass) {
-								id, _ := users.CreateUser(form.Name, form.Email, pass, form.Phone)
+								id, _ := Users.CreateUser(form.Name, form.Email, pass, form.Phone)
 								Session.SetLogin(w, id)
 								http.Redirect(w, r, "/user/", http.StatusFound)
 								return
