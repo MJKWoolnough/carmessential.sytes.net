@@ -18,7 +18,7 @@ type user struct {
 	registerCodec             *authenticate.Codec
 }
 
-func (u *user) init(login, register, email, from string, registerKey []byte) error {
+func (u *user) init(login, register, email, from, registerKey string) error {
 	var err error
 	u.loginT, err = template.ParseFiles(login)
 	if err != nil {
@@ -32,7 +32,7 @@ func (u *user) init(login, register, email, from string, registerKey []byte) err
 	if err != nil {
 		return err
 	}
-	u.registerCodec, err = authenticate.NewCodec(registerKey, time.Hour*24)
+	u.registerCodec, err = authenticate.NewCodec([]byte(registerKey), time.Hour*24)
 	return err
 }
 

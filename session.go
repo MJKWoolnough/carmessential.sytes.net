@@ -16,9 +16,9 @@ type sess struct {
 	loginStore, basketStore *sessions.CookieStore
 }
 
-func (s *sess) init(sessionKey, basketKey []byte, basketTypes ...interface{}) {
-	s.loginStore, _ = sessions.NewCookieStore(sessionKey, sessions.HTTPOnly(), sessions.Name("session"), sessions.Expiry(time.Hour*24*30))
-	s.basketStore, _ = sessions.NewCookieStore(basketKey, sessions.HTTPOnly(), sessions.Name("basket"))
+func (s *sess) init(sessionKey, basketKey string, basketTypes ...interface{}) {
+	s.loginStore, _ = sessions.NewCookieStore([]byte(sessionKey), sessions.HTTPOnly(), sessions.Name("session"), sessions.Expiry(time.Hour*24*30))
+	s.basketStore, _ = sessions.NewCookieStore([]byte(basketKey), sessions.HTTPOnly(), sessions.Name("basket"))
 	for _, typ := range basketTypes {
 		gob.Register(typ)
 	}
