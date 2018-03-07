@@ -5,6 +5,8 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"math/rand"
+	"strconv"
+	"strings"
 
 	"github.com/MJKWoolnough/errors"
 )
@@ -146,6 +148,16 @@ func (u *users) GetUserName(id int) (string, error) {
 		return "", err
 	}
 	return username, nil
+}
+
+func (u *users) IsAdmin(id int) bool {
+	idstr := strconv.Itoa(id)
+	for _, ids := range strings.Split(Config.Get("admins"), "\n") {
+		if ids == idstr {
+			return true
+		}
+	}
+	return false
 }
 
 // Errors
