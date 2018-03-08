@@ -151,8 +151,26 @@ func (u *user) Login(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/user/", http.StatusFound)
 		return
 	}
+	var form struct {
+		Email, Error string
+	}
+	var ok bool
+	r.ParseForm()
+	if form.Email, ok = r.Form.Get("email"); ok {
+		uid, err := Users.UserID(form.Email)
+		if err != nil {
+			//?
+		} else {
+			if Users.LoginUser(uid, r.Form.Get("password")) == nil {
+				Session.SetLogin(w, uid)
+				http.Redirect(w, r, "/user/", http.StatusFound)
+				return
+			}
+		}
+		form.Error = "Unknown Email Address or Invalid Password"
+	}
 	Pages.WriteHeader(w, r, loginPH)
-	w.Write([]byte("LOGIN"))
+	u.loginT.Execute(w, &form)
 	Pages.WriteFooter(w)
 }
 
