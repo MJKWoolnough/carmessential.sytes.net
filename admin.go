@@ -1,6 +1,10 @@
 package main
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+	"strings"
+)
 
 var Admin admin
 
@@ -25,6 +29,13 @@ func (a *admin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Style:       []byte("user"),
 		WriteBasket: true,
 	})
-	w.Write([]byte("ADMIN"))
+	switch strings.TrimPrefix(r.URL.Path, "/admin/") {
+	case "", "index.html":
+		fmt.Fprintln(w, "INDEX")
+	case "config.html":
+		fmt.Fprintln(w, "CONFIG")
+	default:
+		fmt.Fprintln(w, "404")
+	}
 	Pages.WriteFooter(w)
 }
