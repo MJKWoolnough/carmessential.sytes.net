@@ -26,16 +26,24 @@ func (a *admin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	Pages.WriteHeader(w, r, PageHeader{
 		Title:       []byte("CARMEssential - Admin"),
-		Style:       []byte("user"),
-		WriteBasket: true,
+		Style:       []byte("admin"),
+		WriteBasket: false,
 	})
 	switch strings.TrimPrefix(r.URL.Path, "/admin/") {
 	case "", "index.html":
-		fmt.Fprintln(w, "INDEX")
+		a.index(w, r)
 	case "config.html":
-		fmt.Fprintln(w, "CONFIG")
+		a.config(w, r)
 	default:
 		fmt.Fprintln(w, "404")
 	}
 	Pages.WriteFooter(w)
+}
+
+func (a *admin) index(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "INDEX")
+}
+
+func (a *admin) config(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "CONFIG")
 }
