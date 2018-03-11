@@ -139,7 +139,7 @@ func (u *users) UpdateUserEmail(id int64, emailAddress, password string) error {
 	return err
 }
 
-func (u *users) GetUserName(id int) (string, error) {
+func (u *users) GetUserName(id int64) (string, error) {
 	var username string
 	DB.Lock()
 	err := u.getUserName.QueryRow(id).Scan(&username)
@@ -150,7 +150,7 @@ func (u *users) GetUserName(id int) (string, error) {
 	return username, nil
 }
 
-func (u *users) IsAdmin(id int) bool {
+func (u *users) IsAdmin(id int64) bool {
 	idstr := strconv.Itoa(id)
 	for _, ids := range strings.Split(Config.Get("admins"), "\n") {
 		if ids == idstr {
