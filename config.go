@@ -23,6 +23,7 @@ func (c *config) init(db *sql.DB) error {
 	if err != nil {
 		return err
 	}
+	c.data = make(map[string]string)
 	for rows.Next() {
 		var key, value string
 		err = rows.Scan(&key, &value)
