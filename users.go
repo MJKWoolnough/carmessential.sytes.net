@@ -151,8 +151,8 @@ func (u *users) GetUserName(id int64) (string, error) {
 }
 
 func (u *users) IsAdmin(id int64) bool {
-	idstr := strconv.Itoa(id)
-	for _, ids := range strings.Split(Config.Get("admins"), "\n") {
+	idstr := strconv.Itoa(int(id))
+	for _, ids := range strings.Split(Config.Get("admins"), " ") {
 		if ids == idstr {
 			return true
 		}

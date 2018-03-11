@@ -156,7 +156,8 @@ func (u *user) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	var ok bool
 	r.ParseForm()
-	if form.Email, ok = r.Form.Get("email"); ok {
+	if _, ok = r.Form["email"]; ok {
+		form.Email = r.Form.Get("email")
 		uid, err := Users.UserID(form.Email)
 		if err != nil {
 			//?

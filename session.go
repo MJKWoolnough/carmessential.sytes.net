@@ -24,17 +24,17 @@ func (s *sess) init(sessionKey, basketKey string, basketTypes ...interface{}) {
 	}
 }
 
-func (s *sess) GetLogin(r *http.Request) uint64 {
+func (s *sess) GetLogin(r *http.Request) int64 {
 	buf := s.loginStore.Get(r)
 	if len(buf) != 8 {
 		return 0
 	}
-	return binary.LittleEndian.Uint64(buf)
+	return int64(binary.LittleEndian.Uint64(buf))
 }
 
-func (s *sess) SetLogin(w http.ResponseWriter, userID uint64) {
+func (s *sess) SetLogin(w http.ResponseWriter, userID int64) {
 	var buf [8]byte
-	binary.LittleEndian.PutUint64(buf[:], userID)
+	binary.LittleEndian.PutUint64(buf[:], uint64(userID))
 	s.loginStore.Set(w, buf[:])
 }
 
