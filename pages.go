@@ -52,7 +52,7 @@ func loadFile(filename string) ([]byte, error) {
 
 func (p *pages) WriteHeader(w http.ResponseWriter, r *http.Request, ph PageHeader) {
 	w.Header().Set("Content-Type", "text/html")
-	userID, ok := r.Context().Value("userID").(uint64)
+	userID, ok := r.Context().Value("userID").(int64)
 	if !ok {
 		userID = Session.GetLogin(r)
 	}
