@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"strings"
 
 	"github.com/MJKWoolnough/httpbuffer"
 	_ "github.com/MJKWoolnough/httpbuffer/gzip"
@@ -18,8 +19,11 @@ var (
 	databaseFile = flag.String("d", "./database.db", "database file")
 	filesDir     = flag.String("f", "./files", "files directory")
 	logName      = flag.String("n", "", "name for logging")
+	initConfig   = flag.Bool("init", false, "used for initial configuration")
 	logger       *log.Logger
 )
+
+const configPrefix = "CONFIG_"
 
 func main() {
 	flag.Parse()
@@ -27,8 +31,17 @@ func main() {
 
 	err := DB.init(*databaseFile)
 	if err != nil {
-		log.Printf("error while opening database: %s\n", err)
+		logger.Printf("error while opening database: %s\n", err)
 		return
+	}
+	if *initConfig {
+		for _, env := range os.Environ() {
+			if strings.HasPrefix(env, configPrefix) {
+				parts := strings.SplitN(strings.TrimPrefix(env, configPrefix), "=", 2)
+				logger.Printf("CONFIG: Setting %q to %q\n", parts[0], parts[1])
+				Config.Set(parts[0], parts[1])
+			}
+		}
 	}
 	Email.init(Config.Get("emailSMTP"), Config.Get("emailLogin"), smtp.PlainAuth("", Config.Get("emailLogin"), Config.Get("emailPassword"), Config.Get("emailHost")))
 	Session.init(Config.Get("sessionKey"), Config.Get("basketKey"))
