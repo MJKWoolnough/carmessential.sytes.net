@@ -23,7 +23,7 @@ var (
 	logger       *log.Logger
 )
 
-const configPrefix = "CONFIG_"
+const configPrefix = "CECONFIG_"
 
 func main() {
 	flag.Parse()
