@@ -1,22 +1,28 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"html/template"
 	"net/http"
+	"path"
 	"strings"
 )
 
 var Admin admin
 
 type admin struct {
+	configT *template.Template
 }
 
 func (a *admin) init() {
-
+	a.configT = template.Must(template.ParseFiles(path.Join(*filesDir, "admin", "config.tmpl")))
 }
 
 func (a *admin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if uid := Session.GetLogin(r); !Session.IsAdmin(uid) {
+	uid := Session.GetLogin(r)
+	r = r.WithContext(context.WithValue(r.Context(), "userID", uid))
+	if !Users.IsAdmin(uid) {
 		if uid == 0 {
 			http.Redirect(w, r, "/login.html", http.StatusFound)
 			return
@@ -45,5 +51,5 @@ func (a *admin) index(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *admin) config(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "CONFIG")
+	a.configT.Execute(w, Config.data)
 }
