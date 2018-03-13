@@ -67,24 +67,24 @@ func (u *users) UserID(emailAddress string) (int64, error) {
 	return id, nil
 }
 
-func (u *users) UserHash(id int64) (sql.RawBytes, error) {
-	passHash := make(sql.RawBytes, saltLength, saltLength+sha256.Size)
+func (u *users) UserHash(id int64) ([]byte, error) {
+	passHash := make([]byte, saltLength, saltLength+sha256.Size)
 	err := u.userHash.QueryRow(id).Scan(&passHash)
 	return passHash, err
 }
 
 func comparePassword(password string, saltedHash []byte) error {
 	pass := passwordBuffer(password)
-	copy(pass, saltedHash)
-	if !bytes.Equal(saltedHash, passwordHash(pass, password)) {
+	copy(pass, saltedHash[:saltLength])
+	if !bytes.Equal(saltedHash, passwordHash(pass[:saltLength], password)) {
 		return ErrInvalidPassword
 	}
 	return nil
 }
 
 func (u *users) CreateUser(name, emailAddress, password, phone string) (int64, error) {
-	salt := sql.RawBytes(passwordBuffer(password))
-	for n := range salt {
+	salt := passwordBuffer(password)
+	for n := range salt[:saltLength] {
 		salt[n] = byte(rand.Intn(256))
 	}
 	saltedHash := passwordHash(salt, password)
