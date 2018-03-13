@@ -30,7 +30,7 @@ func (u *users) init(db *sql.DB) error {
 	}{
 		{&u.userID, "SELECT [ID] FROM [User] WHERE [EmailAddress] = ?;"},
 		{&u.userHash, "SELECT [Password] FROM [User] WHERE [ID] = ?;"},
-		{&u.createUser, "INSERT INTO [User]([Name], [EmailAddress], [Password]) VALUES (?, ?, ?);"},
+		{&u.createUser, "INSERT INTO [User]([Name], [EmailAddress], [Password], [Phone]) VALUES (?, ?, ?, ?);"},
 		{&u.updatePassword, "UPDATE [User] SET [Password] = ? WHERE [ID] = ?;"},
 		{&u.updateEmail, "UPDATE [User] SET [EmailAddress] = ? WHERE [ID] = ?;"},
 		{&u.getUserName, "SELECT [Name] FROM [User] WHERE [ID] = ?;"},
