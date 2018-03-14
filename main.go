@@ -72,6 +72,7 @@ func main() {
 		log.Printf("error while opening user templates: %s\n", err)
 		return
 	}
+	Admin.init()
 
 	// load items from database
 	// load schedule from database
