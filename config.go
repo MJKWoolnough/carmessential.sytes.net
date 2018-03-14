@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"sort"
 	"sync"
 )
 
@@ -58,4 +59,33 @@ func (c *config) Set(key, value string) {
 	DB.Unlock()
 	c.data[key] = value
 	c.lock.Unlock()
+}
+
+type KeyValues []KeyValue
+
+func (k KeyValues) Len() int {
+	return len(k)
+}
+
+func (k KeyValues) Less(i, j int) bool {
+	return k[i].Key < k[j].Key
+}
+
+func (k KeyValues) Swap(i, j int) {
+	k[i], k[j] = k[j], k[i]
+}
+
+type KeyValue struct {
+	Key, Value string
+}
+
+func (c *config) AsSlice() KeyValues {
+	Config.lock.RLock()
+	vars := make(KeyValues, 0, len(Config.data))
+	for key, value := range Config.data {
+		vars = append(vars, KeyValue{key, value})
+	}
+	Config.lock.RUnlock()
+	sort.Sort(vars)
+	return vars
 }
