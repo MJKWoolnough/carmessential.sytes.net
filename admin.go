@@ -51,5 +51,5 @@ func (a *admin) index(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *admin) config(w http.ResponseWriter, r *http.Request) {
-	a.configT.Execute(w, Config.data)
+	a.configT.Execute(w, Config.AsSlice())
 }
