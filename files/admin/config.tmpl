@@ -1,14 +1,14 @@
 			<form action="?" method="post">
-{{range $index, $keyValue := .KeyValues}}
+{{range $index, $keyValue := .}}
 				<label for="v_{{$index}}">{{$keyValue.Key}}</label>
 				<input type="hidden" name="k_{{$index}}" value="{{$keyValue.Key}}" />
 				<input type="text" name="v_{{$index}}" value="{{$keyValue.Value}}" />
 				<button form="delete_{{$index}}">&#10062;</button>
 				<br />
 {{end}}
-				<input type="submit" name="Update" id="submit" />
+				<input type="submit" value="Update" id="submit" />
 			</form>
-{{range $index, $keyValue := .KeyValues}}
+{{range $index, $keyValue := .}}
 			<form action="?" method="post" id="delete_{{$index}}">
 				<input type="hidden" name="key" value="{{$keyValue.Key}}" />
 			</form>
