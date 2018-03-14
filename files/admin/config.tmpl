@@ -10,6 +10,6 @@
 			</form>
 {{range $index, $keyValue := .}}
 			<form action="?" method="post" id="delete_{{$index}}">
-				<input type="hidden" name="key" value="{{$keyValue.Key}}" />
+				<input type="hidden" name="delete" value="{{$keyValue.Key}}" />
 			</form>
 {{end}}
