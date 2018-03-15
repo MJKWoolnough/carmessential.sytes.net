@@ -94,3 +94,9 @@ func (c *config) AsSlice() KeyValues {
 	sort.Sort(vars)
 	return vars
 }
+
+func (c *config) Remove(key string) {
+	c.lock.Lock()
+	delete(c.data, key)
+	c.lock.Unlock()
+}
