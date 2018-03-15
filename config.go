@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"sort"
 	"sync"
+
+	"github.com/MJKWoolnough/errors"
 )
 
 var Config config
@@ -18,27 +20,30 @@ type config struct {
 func (c *config) init(db *sql.DB) error {
 	_, err := db.Exec("CREATE TABLE IF NOT EXISTS [Config]([Key] TEXT NOT NULL, [Value] TEXT NOT NULL DEFAULT '');")
 	if err != nil {
-		return err
+		return errors.WithContext("error creating Config table: ", err)
 	}
 	rows, err := db.Query("SELECT [Key], [Value] FROM [Config];")
 	if err != nil {
-		return err
+		return errors.WithContext("error get Config data: ", err)
 	}
 	c.data = make(map[string]string)
 	for rows.Next() {
 		var key, value string
 		err = rows.Scan(&key, &value)
 		if err != nil {
-			return err
+			return errors.WithContext("error getting Config row data: ", err)
 		}
 		c.data[key] = value
 	}
 	c.update, err = db.Prepare("UPDATE [Config] SET [Value] = ? WHERE [Key] = ?;")
 	if err != nil {
-		return err
+		return errors.WithContext("error preparing Config Update statement: ", err)
 	}
 	c.insert, err = db.Prepare("INSERT INTO [Config] ([Key], [Value]) VALUES (?, ?);")
-	return err
+	if err != nil {
+		return errors.WithContext("error preparing Config Insert statement: ", err)
+	}
+	return nil
 }
 
 func (c *config) Get(key string) string {
