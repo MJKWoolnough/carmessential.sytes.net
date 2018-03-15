@@ -2,8 +2,10 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"sync"
 
+	"github.com/MJKWoolnough/errors"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -17,16 +19,16 @@ type db struct {
 func (db *db) init(filename string) error {
 	database, err := sql.Open("sqlite3", filename)
 	if err != nil {
-		return err
+		return errors.WithContext(fmt.Sprintf("error opening database file %q: ", filename), err)
 	}
 	if err = Config.init(database); err != nil {
-		return err
+		return errors.WithContext("error initialising Config: ", err)
 	}
 	if err = Treatments.init(database); err != nil {
-		return err
+		return errors.WithContext("error initialising Treatments: ", err)
 	}
 	if err = Users.init(database); err != nil {
-		return err
+		return errors.WithContext("error initialising Users: ", err)
 	}
 	db.DB = database
 	return nil

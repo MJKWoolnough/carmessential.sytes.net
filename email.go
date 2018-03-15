@@ -1,6 +1,11 @@
 package main
 
-import "net/smtp"
+import (
+	"fmt"
+	"net/smtp"
+
+	"github.com/MJKWoolnough/errors"
+)
 
 var Email email
 
@@ -17,5 +22,9 @@ func (e *email) init(addr, from string, auth smtp.Auth) {
 }
 
 func (e *email) Send(to string, msg []byte) error {
-	return smtp.SendMail(e.addr, e.auth, e.from, []string{to}, msg)
+	err := smtp.SendMail(e.addr, e.auth, e.from, []string{to}, msg)
+	if err != nil {
+		return errors.WithContext(fmt.Sprintf("error sending email to %q: ", to), err)
+	}
+	return nil
 }

@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/MJKWoolnough/errors"
 	"github.com/MJKWoolnough/memio"
 )
 
@@ -57,32 +58,33 @@ func (c categoryMap) order(id uint) uint {
 func (t *treatments) init(db *sql.DB) error {
 	_, err := db.Exec("CREATE TABLE IF NOT EXISTS [Treatment]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Name] TEXT NOT NULL, [Category] INTEGER NOT NULL, [Price] INTEGER NOT NULL, [Duration] INTEGER NOT NULL, [Description] TEXT NOT NULL, [Order] INTEGER NOT NULL);")
 	if err != nil {
-		fmt.Println(1)
-		return err
+		return errors.WithContext("error creating Treatment table: ", err)
 	}
 	_, err = db.Exec("CREATE TABLE IF NOT EXISTS [Category]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Name] TEXT NOT NULL);")
 	if err != nil {
-		fmt.Println(2)
-		return err
+		return errors.WithContext("error creating Category table: ", err)
 	}
 
-	for stmt, query := range map[**sql.Stmt]string{
-		&t.addTreatment:    "INSERT INTO [Treatment]([Name], [Category], [Price], [Duration], [Description], [Order]) VALUES (?, ?, ?, ?, ?, ?);",
-		&t.updateTreatment: "UPDATE [Treatment] SET [Name] = ?, [Category] = ?, [Price] = ?, [Duration] = ?, [Description] = ?, [Order] = ? WHERE [ID] = ?;",
-		&t.removeTreatment: "DELETE FROM [Treatment] WHERE [ID] = ?;",
-		&t.addCategory:     "INSERT INTO [Category]([Name]) VALUES (?);",
-		&t.updateCategory:  "UPDATE [Category] SET [Name] = ? WHERE [ID] = ?;",
-		&t.removeCategory:  "DELETE FROM [Category] WHERE [ID] = ?;",
+	for _, stmt := range [...]struct {
+		Stmt  **sql.Stmt
+		Query string
+	}{
+		{&t.addTreatment, "INSERT INTO [Treatment]([Name], [Category], [Price], [Duration], [Description], [Order]) VALUES (?, ?, ?, ?, ?, ?);"},
+		{&t.updateTreatment, "UPDATE [Treatment] SET [Name] = ?, [Category] = ?, [Price] = ?, [Duration] = ?, [Description] = ?, [Order] = ? WHERE [ID] = ?;"},
+		{&t.removeTreatment, "DELETE FROM [Treatment] WHERE [ID] = ?;"},
+		{&t.addCategory, "INSERT INTO [Category]([Name]) VALUES (?);"},
+		{&t.updateCategory, "UPDATE [Category] SET [Name] = ? WHERE [ID] = ?;"},
+		{&t.removeCategory, "DELETE FROM [Category] WHERE [ID] = ?;"},
 	} {
-		*stmt, err = db.Prepare(query)
+		*stmt.Stmt, err = db.Prepare(stmt.Query)
 		if err != nil {
-			return err
+			return errors.WithContext(fmt.Sprintf("error creating prepared statement %q: ", stmt.Query), err)
 		}
 	}
 
 	trows, err := db.Query("SELECT [ID], [Name], [Category], [Price], [Duration], [Order] FROM [Treatment];")
 	if err != nil {
-		return err
+		return errors.WithContext("error getting Treatment data: ", err)
 	}
 
 	t.treatments = make(treatmentMap)
@@ -94,7 +96,7 @@ func (t *treatments) init(db *sql.DB) error {
 			description string
 		)
 		if err = trows.Scan(&tm.ID, &tm.Name, &tm.Category, &tm.Price, &tm.Duration, &description, &tm.Order); err != nil {
-			return err
+			return errors.WithContext("error reading Treatment row: ", err)
 		}
 		bbcode.ConvertString(&buf, description)
 		//tm.Description = template.HTML(buf)
@@ -103,12 +105,12 @@ func (t *treatments) init(db *sql.DB) error {
 		buf = buf[:0]
 	}
 	if err = trows.Close(); err != nil {
-		return err
+		return errors.WithContext("error closing Treatment rows: ", err)
 	}
 
 	crows, err := db.Query("SELECT [ID], [Name] FROM [Category];")
 	if err != nil {
-		return err
+		return errors.WithContext("error getting Category data: ", err)
 	}
 
 	t.categories = make(categoryMap)
@@ -116,13 +118,13 @@ func (t *treatments) init(db *sql.DB) error {
 	for crows.Next() {
 		var cat Category
 		if err = crows.Scan(&cat.ID, &cat.Name, &cat.Order); err != nil {
-			return err
+			return errors.WithContext("error reading Category row: ", err)
 		}
 		t.categoryOrder = append(t.categoryOrder, cat.ID)
 		t.categories[cat.ID] = &cat
 	}
 	if err = crows.Close(); err != nil {
-		return err
+		return errors.WithContext("error closing Category row: ", err)
 	}
 
 	t.generateHTML()

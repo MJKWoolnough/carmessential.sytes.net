@@ -7,33 +7,37 @@ import (
 	"time"
 
 	"github.com/MJKWoolnough/authenticate"
+	"github.com/MJKWoolnough/errors"
 	"github.com/MJKWoolnough/memio"
 )
 
 var User user
 
 type user struct {
-	loginT, registerT, emailT *template.Template
-	from                      string
-	registerCodec             *authenticate.Codec
+	loginT, registerT string
+	emailT            *template.Template
+	from              string
+	registerCodec     *authenticate.Codec
 }
 
 func (u *user) init(login, register, email, from, registerKey string) error {
-	var err error
-	u.loginT, err = template.ParseFiles(login)
+	err := Pages.RegisterTemplate(login)
 	if err != nil {
-		return err
+		return errors.WithContext("error registering Login template: ", err)
 	}
-	u.registerT, err = template.ParseFiles(register)
+	err = Pages.RegisterTemplate(register)
 	if err != nil {
-		return err
+		return errors.WithContext("error registering Register template: ", err)
 	}
 	u.emailT, err = template.ParseFiles(email)
 	if err != nil {
-		return err
+		return errors.Withcontext("error registering Email template: ", err)
 	}
 	u.registerCodec, err = authenticate.NewCodec([]byte(registerKey), time.Hour*24)
-	return err
+	if err != nil {
+		return errors.WithContext("error creating registration authenticator: ", err)
+	}
+	return nil
 }
 
 func (u *user) ServeHTTP(w http.ResponseWriter, r *http.Request) {

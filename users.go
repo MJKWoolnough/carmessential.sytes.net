@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"database/sql"
+	"fmt"
 	"math/rand"
 	"strconv"
 	"strings"
@@ -22,7 +23,7 @@ type users struct {
 func (u *users) init(db *sql.DB) error {
 	_, err := db.Exec("CREATE TABLE IF NOT EXISTS [User]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Name] TEXT NOT NULL, [EmailAddress] TEXT NOT NULL, [Password] BLOB NOT NULL, [Phone] TEXT NOT NULL DEFAULT '');")
 	if err != nil {
-		return err
+		return errors.WithContext("error creating User table: ", err)
 	}
 	for _, stmt := range [...]struct {
 		Stmt  **sql.Stmt
@@ -37,7 +38,7 @@ func (u *users) init(db *sql.DB) error {
 	} {
 		*stmt.Stmt, err = db.Prepare(stmt.Query)
 		if err != nil {
-			return err
+			return errors.WithContext(fmt.Sprintf("error preparing User statement %q: ", stmt.Query), err)
 		}
 	}
 	return nil
