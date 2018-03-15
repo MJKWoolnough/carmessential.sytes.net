@@ -31,12 +31,14 @@ func (u *user) init(login, register, email, from, registerKey string) error {
 	}
 	u.emailT, err = template.ParseFiles(email)
 	if err != nil {
-		return errors.Withcontext("error registering Email template: ", err)
+		return errors.WithContext("error registering Email template: ", err)
 	}
 	u.registerCodec, err = authenticate.NewCodec([]byte(registerKey), time.Hour*24)
 	if err != nil {
 		return errors.WithContext("error creating registration authenticator: ", err)
 	}
+	u.loginT = login
+	u.registerT = register
 	return nil
 }
 
@@ -49,18 +51,22 @@ func (u *user) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/admin/", http.StatusFound)
 		return
 	}
-	Pages.WriteHeader(w, r, PageHeader{
-		Title:       []byte("CARMEssential - User Area"),
-		Style:       []byte("user"),
-		WriteBasket: true,
-	})
-	w.Write([]byte("USER"))
-	Pages.WriteFooter(w)
+	Pages.Write(w, r,
+		PageHeader{
+			Title:       "CARMEssential - User Area",
+			Style:       "user",
+			WriteBasket: true,
+		},
+		Body{
+			Template: OutputTemplate,
+			Data:     "USER INDEX",
+		},
+	)
 }
 
 var registerPH = PageHeader{
-	Title:       []byte("CARMEssential - Register"),
-	Style:       []byte("user"),
+	Title:       "CARMEssential - Register",
+	Style:       "user",
 	WriteBasket: true,
 }
 
@@ -139,14 +145,15 @@ func (u *user) Register(w http.ResponseWriter, r *http.Request) {
 			form.Error = "Invalid Email Address"
 		}
 	}
-	Pages.WriteHeader(w, r, registerPH)
-	u.registerT.Execute(w, &form)
-	Pages.WriteFooter(w)
+	Pages.Write(w, r, registerPH, Body{
+		Template: u.registerT,
+		Data:     &form,
+	})
 }
 
 var loginPH = PageHeader{
-	Title:       []byte("CARMEssential - Login"),
-	Style:       []byte("user"),
+	Title:       "CARMEssential - Login",
+	Style:       "user",
 	WriteBasket: true,
 }
 
@@ -174,9 +181,10 @@ func (u *user) Login(w http.ResponseWriter, r *http.Request) {
 		}
 		form.Error = "Unknown Email Address or Invalid Password"
 	}
-	Pages.WriteHeader(w, r, loginPH)
-	u.loginT.Execute(w, &form)
-	Pages.WriteFooter(w)
+	Pages.Write(w, r, loginPH, Body{
+		Template: u.loginT,
+		Data:     &form,
+	})
 }
 
 func (u *user) Logout(w http.ResponseWriter, r *http.Request) {

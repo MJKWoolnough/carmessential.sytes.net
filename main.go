@@ -45,17 +45,7 @@ func main() {
 	}
 	Email.init(Config.Get("emailSMTP"), Config.Get("emailLogin"), smtp.PlainAuth("", Config.Get("emailLogin"), Config.Get("emailPassword"), Config.Get("emailHost")))
 	Session.init(Config.Get("sessionKey"), Config.Get("basketKey"))
-	err = Pages.init(
-		path.Join(*filesDir, "header_a.html"),
-		path.Join(*filesDir, "header_b.html"),
-		path.Join(*filesDir, "header_c.html"),
-		path.Join(*filesDir, "loggedIn.html"),
-		path.Join(*filesDir, "loggedOut.html"),
-		path.Join(*filesDir, "preBasket.html"),
-		path.Join(*filesDir, "noBasket.html"),
-		path.Join(*filesDir, "postBasket.html"),
-		path.Join(*filesDir, "footer.html"),
-	)
+	err = Pages.init(path.Join(*filesDir, "template.tmpl"))
 	if err != nil {
 		log.Printf("error while opening templates: %s\n", err)
 		return
@@ -89,9 +79,9 @@ func main() {
 	wrapped.Handle("/login.html", http.HandlerFunc(User.Login))
 	wrapped.Handle("/logout.html", http.HandlerFunc(User.Logout))
 	wrapped.Handle("/register.html", http.HandlerFunc(User.Register))
-	wrapped.Handle("/terms.html", NewPageFile("CARMEssential - Terms &amp; Conditions", "terms", path.Join(*filesDir, "terms.html"), true))
-	wrapped.Handle("/about.html", NewPageFile("CARMEssential - About Me", "about", path.Join(*filesDir, "about.html"), true))
-	wrapped.Handle("/", NewPageFile("CARMEssential", "home", path.Join(*filesDir, "index.html"), true))
+	wrapped.Handle("/terms.html", NewPageFile("CARMEssential - Terms &amp; Conditions", "terms", "", path.Join(*filesDir, "terms.html"), true))
+	wrapped.Handle("/about.html", NewPageFile("CARMEssential - About Me", "about", "", path.Join(*filesDir, "about.html"), true))
+	wrapped.Handle("/", NewPageFile("CARMEssential", "home", "", path.Join(*filesDir, "index.html"), true))
 	http.Handle("/assets/", http.FileServer(http.Dir(*filesDir)))
 	//http.Handle("/checkout.html", Pages.SemiWrap(basket))
 	http.Handle("/", httpbuffer.Handler{wrapped})
