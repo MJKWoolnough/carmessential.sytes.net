@@ -2,8 +2,19 @@ package main
 
 import (
 	"io"
+	"path"
 	"time"
+
+	"github.com/MJKWoolnough/errors"
 )
+
+func BasketInit(filePath string) error {
+	if err := Pages.RegisterTemplate(path.Join(filePath, "basket.tmpl")); err != nil {
+		return errors.WithContext("error registering basket template: ", err)
+	}
+	// register types
+	return nil
+}
 
 type Basket struct {
 	Items     []Item
@@ -15,8 +26,8 @@ func (b *Basket) IsEmpty() bool {
 	return b == nil || len(b.Items) == 0
 }
 
-func (b *Basket) WriteTo(w io.Writer) (int, error) {
-	return 0, nil
+func (b *Basket) Print(w io.Writer) string {
+	return ""
 }
 
 func (b *Basket) SubTotal() uint {
