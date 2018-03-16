@@ -65,8 +65,9 @@ func (a *admin) config(w http.ResponseWriter, r *http.Request) {
 	}
 	Pages.Write(w, r,
 		PageHeader{
-			Title: "CARMEssential - Admin - Config",
-			Style: "admin",
+			Title:  "CARMEssential - Admin - Config",
+			Style:  "admin",
+			Script: "config",
 		},
 		Body{
 			Template: a.configT,
