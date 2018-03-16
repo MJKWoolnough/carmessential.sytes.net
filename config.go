@@ -11,7 +11,7 @@ import (
 var Config config
 
 type config struct {
-	update, insert *sql.Stmt
+	update, insert, remove *sql.Stmt
 
 	lock sync.RWMutex
 	data map[string]string
@@ -42,6 +42,10 @@ func (c *config) init(db *sql.DB) error {
 	c.insert, err = db.Prepare("INSERT INTO [Config] ([Key], [Value]) VALUES (?, ?);")
 	if err != nil {
 		return errors.WithContext("error preparing Config Insert statement: ", err)
+	}
+	c.remove, err = db.Prepare("DELETE FROM [Config] WHERE [Key] = ?;")
+	if err != nil {
+		return errors.WithContext("error preparing Config Remove statement: ", err)
 	}
 	return nil
 }
@@ -98,5 +102,6 @@ func (c *config) AsSlice() KeyValues {
 func (c *config) Remove(key string) {
 	c.lock.Lock()
 	delete(c.data, key)
+	c.remove.Exec(key)
 	c.lock.Unlock()
 }
