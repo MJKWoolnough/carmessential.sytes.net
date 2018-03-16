@@ -54,12 +54,12 @@ func (a *admin) index(w http.ResponseWriter, r *http.Request) {
 
 func (a *admin) config(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	if _, ok := r.Form["delete"]; ok {
-		Config.Remove(r.Form.Get("delete"))
+	if _, ok := r.PostForm["delete"]; ok {
+		Config.Remove(r.PostForm.Get("delete"))
 	} else {
-		for param := range r.Form {
+		for param := range r.PostForm {
 			if strings.HasPrefix(param, "k_") {
-				Config.Set(r.Form.Get(param), r.Form.Get("v_"+param[2:]))
+				Config.Set(r.PostForm.Get(param), r.PostForm.Get("v_"+param[2:]))
 			}
 		}
 	}
