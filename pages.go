@@ -18,7 +18,9 @@ var Pages pages
 const OutputTemplate = "Output"
 
 type pages struct {
+	mu           sync.RWMutex
 	templateT    *template.Template
+	templateF    string
 	templateData [2]string
 	templates    []string
 }
@@ -42,18 +44,30 @@ func loadFile(filename string) (string, error) {
 }
 
 func (p *pages) init(templateFile string) error {
-	bufStr, err := loadFile(templateFile)
+	p.templateT = template.New("")
+	if err := p.makeOutputTemplate(); err != nil {
+		return err
+	}
+	p.templateF = templateFile
+	return p.loadMainTemplate()
+}
+
+func (p *pages) makeOutputTemplate() error {
+	_, err := p.templateT.New(OutputTemplate).Parse("{{.}}")
 	if err != nil {
-		return errors.WithContext(fmt.Sprintf("error loading main template file (%q): ", templateFile), err)
+		return errors.WithContext("error creating Output template: ", err)
+	}
+	return nil
+}
+
+func (p *pages) loadMainTemplate() error {
+	bufStr, err := loadFile(p.templateF)
+	if err != nil {
+		return errors.WithContext(fmt.Sprintf("error loading main template file (%q): ", p.templateF), err)
 	}
 	splitStr := strings.SplitN(bufStr, "{{/* TEMPLATES HERE */}}", 2)
 	if len(splitStr) != 2 {
 		return errors.Error("invalid template")
-	}
-	p.templateT = template.New("")
-	_, err = p.templateT.New(OutputTemplate).Parse("{{.}}")
-	if err != nil {
-		return errors.WithContext("error creating Output template: ", err)
 	}
 	p.templateData[0] = splitStr[0]
 	p.templateData[1] = splitStr[1]
@@ -75,7 +89,7 @@ func (p *pages) buildMain() error {
 	return nil
 }
 
-func (p *pages) RegisterTemplate(filename string) error {
+func (p *pages) registerTemplate(filename string) error {
 	data, err := loadFile(filename)
 	if err != nil {
 		return errors.WithContext(fmt.Sprintf("error loading template file (%q): ", filename), err)
@@ -83,8 +97,40 @@ func (p *pages) RegisterTemplate(filename string) error {
 	if _, err = p.templateT.New(filename).Parse(data); err != nil {
 		return errors.WithContext(fmt.Sprintf("error parsing template %q: ", filename), err)
 	}
+	return nil
+}
+
+func (p *pages) RegisterTemplate(filename string) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if err := p.registerTemplate(filename); err != nil {
+		return err
+	}
 	p.templates = append(p.templates, filename)
-	return p.buildMain()
+	err := p.buildMain()
+	return err
+}
+
+func (p *pages) Rebuild() error {
+	old := p.templateT
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.templateT = template.New("")
+	if err := p.makeOutputTemplate(); err != nil {
+		p.templateT = old
+		return err
+	}
+	for _, tmpl := range p.templates {
+		if err := p.registerTemplate(tmpl); err != nil {
+			p.templateT = old
+			return err
+		}
+	}
+	if err := p.loadMainTemplate(); err != nil {
+		p.templateT = old
+		return err
+	}
+	return nil
 }
 
 func (p *pages) Write(w http.ResponseWriter, r *http.Request, ph PageHeader, body Body) {
@@ -100,6 +146,7 @@ func (p *pages) Write(w http.ResponseWriter, r *http.Request, ph PageHeader, bod
 			basket = Session.LoadBasket(r)
 		}
 	}
+	p.mu.RLock()
 	if err := p.templateT.Execute(w, struct {
 		LoggedIn bool
 		PageHeader
@@ -113,6 +160,7 @@ func (p *pages) Write(w http.ResponseWriter, r *http.Request, ph PageHeader, bod
 	}); err != nil {
 		logger.Printf("error writing template: %s", err)
 	}
+	p.mu.RUnlock()
 }
 
 type Body struct {
