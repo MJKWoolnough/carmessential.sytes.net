@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/MJKWoolnough/errors"
 	"github.com/MJKWoolnough/memio"
 	"github.com/MJKWoolnough/sessions"
 )
@@ -16,9 +17,17 @@ type sess struct {
 	loginStore, basketStore *sessions.CookieStore
 }
 
-func (s *sess) init(sessionKey, basketKey string) {
-	s.loginStore, _ = sessions.NewCookieStore([]byte(sessionKey), sessions.HTTPOnly(), sessions.Name("session"), sessions.Expiry(time.Hour*24*30))
-	s.basketStore, _ = sessions.NewCookieStore([]byte(basketKey), sessions.HTTPOnly(), sessions.Name("basket"))
+func (s *sess) init(sessionKey, basketKey string) error {
+	var err error
+	s.loginStore, err = sessions.NewCookieStore([]byte(sessionKey), sessions.HTTPOnly(), sessions.Name("session"), sessions.Expiry(time.Hour*24*30))
+	if err != nil {
+		return errors.WithContext("error initialising Login Store: ", err)
+	}
+	s.basketStore, err = sessions.NewCookieStore([]byte(basketKey), sessions.HTTPOnly(), sessions.Name("basket"))
+	if err != nil {
+		return errors.WithContext("error initialising Basket Store: ", err)
+	}
+	return nil
 }
 
 func (s *sess) RegisterBasketType(basketTypes ...interface{}) {

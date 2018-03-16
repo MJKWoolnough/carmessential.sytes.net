@@ -29,8 +29,7 @@ func main() {
 	flag.Parse()
 	logger = log.New(os.Stderr, *logName, log.LstdFlags)
 
-	err := DB.init(*databaseFile)
-	if err != nil {
+	if err := DB.init(*databaseFile); err != nil {
 		logger.Printf("error while opening database: %s\n", err)
 		return
 	}
@@ -43,27 +42,46 @@ func main() {
 			}
 		}
 	}
-	Email.init(Config.Get("emailSMTP"), Config.Get("emailLogin"), smtp.PlainAuth("", Config.Get("emailLogin"), Config.Get("emailPassword"), Config.Get("emailHost")))
-	Session.init(Config.Get("sessionKey"), Config.Get("basketKey"))
-	err = Pages.init(path.Join(*filesDir, "template.tmpl"))
-	if err != nil {
+	if err := Email.init(
+		Config.Get("emailSMTP"),
+		Config.Get("emailLogin"),
+		smtp.PlainAuth(
+			"",
+			Config.Get("emailLogin"),
+			Config.Get("emailPassword"),
+			Config.Get("emailHost"),
+		),
+	); err != nil {
+		log.Printf("error initialising Email: %s\n", err)
+		return
+	}
+	if err := Session.init(Config.Get("sessionKey"), Config.Get("basketKey")); err != nil {
+		log.Printf("error initialising Sessions: %s\n", err)
+		return
+	}
+	if err := Pages.init(path.Join(*filesDir, "template.tmpl")); err != nil {
 		log.Printf("error while opening templates: %s\n", err)
 		return
 	}
-	BasketInit(*filesDir)
+	if err := BasketInit(*filesDir); err != nil {
+		logger.Printf("error initialising Basket: %s\n", err)
+		return
+	}
 
-	err = User.init(
+	if err := User.init(
 		path.Join(*filesDir, "login.tmpl"),
 		path.Join(*filesDir, "register.tmpl"),
 		path.Join(*filesDir, "email.tmpl"),
 		Config.Get("emailFrom"),
 		Config.Get("registrationKey"),
-	)
-	if err != nil {
+	); err != nil {
 		log.Printf("error while opening user templates: %s\n", err)
 		return
 	}
-	Admin.init()
+	if err := Admin.init(); err != nil {
+		logger.Printf("error initialising Admin: %s\n", err)
+		return
+	}
 
 	// load items from database
 	// load schedule from database
@@ -104,7 +122,7 @@ func main() {
 		close(cc)
 	}()
 
-	err = client.Run()
+	err := client.Run()
 
 	select {
 	case <-cc:

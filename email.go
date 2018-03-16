@@ -15,10 +15,11 @@ type email struct {
 	from string
 }
 
-func (e *email) init(addr, from string, auth smtp.Auth) {
+func (e *email) init(addr, from string, auth smtp.Auth) error {
 	e.addr = addr
 	e.auth = auth
 	e.from = from
+	return nil
 }
 
 func (e *email) Send(to string, msg []byte) error {
