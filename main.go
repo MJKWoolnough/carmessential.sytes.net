@@ -45,12 +45,12 @@ func main() {
 	}
 	Email.init(Config.Get("emailSMTP"), Config.Get("emailLogin"), smtp.PlainAuth("", Config.Get("emailLogin"), Config.Get("emailPassword"), Config.Get("emailHost")))
 	Session.init(Config.Get("sessionKey"), Config.Get("basketKey"))
-	BasketInit(*filesDir)
 	err = Pages.init(path.Join(*filesDir, "template.tmpl"))
 	if err != nil {
 		log.Printf("error while opening templates: %s\n", err)
 		return
 	}
+	BasketInit(*filesDir)
 
 	err = User.init(
 		path.Join(*filesDir, "login.tmpl"),
