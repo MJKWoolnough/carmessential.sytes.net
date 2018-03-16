@@ -57,28 +57,18 @@ func (p *pages) init(templateFile string) error {
 	}
 	p.templateData[0] = splitStr[0]
 	p.templateData[1] = splitStr[1]
-	return p.parseMain()
+	return p.buildMain()
 }
 
 var mainTemplateBuilder strings.Builder
 
-func (p *pages) parseMain() error {
+func (p *pages) buildMain() error {
 	mainTemplateBuilder.Reset()
-	mainTemplateBuilder.WriteString(p.templateData[0])
-	mainTemplateBuilder.WriteString("{{if eq .Body.Template \"")
-	mainTemplateBuilder.WriteString(OutputTemplate)
-	mainTemplateBuilder.WriteString("\"}}{{template \"")
-	mainTemplateBuilder.WriteString(OutputTemplate)
-	mainTemplateBuilder.WriteString("\" .Body.Data}}")
+	fmt.Fprintf(&mainTemplateBuilder, "%[1]s{{if eq .Body.Template %[2]q}}{{template %[2]q .Body.Data}}", p.templateData[0], OutputTemplate)
 	for _, tmpl := range p.templates {
-		mainTemplateBuilder.WriteString("{{else if eq .Body.Template \"")
-		mainTemplateBuilder.WriteString(tmpl)
-		mainTemplateBuilder.WriteString("\"}}{{template \"")
-		mainTemplateBuilder.WriteString(tmpl)
-		mainTemplateBuilder.WriteString("\" .Body.Data}}")
+		fmt.Fprintf(&mainTemplateBuilder, "{{else if eq .Body.Template %[1]q}}{{template %[1]q .Body.Data}}", tmpl)
 	}
-	mainTemplateBuilder.WriteString("{{end}}")
-	mainTemplateBuilder.WriteString(p.templateData[1])
+	fmt.Fprintf(&mainTemplateBuilder, "{{end}}%s", p.templateData[1])
 	if _, err := p.templateT.Parse(mainTemplateBuilder.String()); err != nil {
 		return errors.WithContext("error building main template: ", err)
 	}
@@ -94,7 +84,7 @@ func (p *pages) RegisterTemplate(filename string) error {
 		return errors.WithContext(fmt.Sprintf("error parsing template %q: ", filename), err)
 	}
 	p.templates = append(p.templates, filename)
-	return p.parseMain()
+	return p.buildMain()
 }
 
 func (p *pages) Write(w http.ResponseWriter, r *http.Request, ph PageHeader, body Body) {
