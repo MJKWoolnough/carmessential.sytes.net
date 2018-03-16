@@ -1,15 +1,19 @@
+			<h2>Configuration Editor</h2>
+			<form action="?" method="post">
+				<input type="submit" name="add" value="+" /><br />
+			</form>
 			<form action="?" method="post">
 {{range $index, $keyValue := .}}
-				<label for="v_{{$index}}">{{$keyValue.Key}}</label>
-				<input type="hidden" name="k_{{$index}}" value="{{$keyValue.Key}}" />
-				<input type="text" name="v_{{$index}}" value="{{$keyValue.Value}}" />
-				<button form="delete_{{$index}}">&#10062;</button>
-				<br />
+				<label for="v_{{$index}}">{{if eq $keyValue.Key ""}}<input type="text" name="k_{{$index}}" />{{else}}{{$keyValue.Key}}{{end}}</label>
+{{if ne $keyValue.Key ""}}				<input type="hidden" name="k_{{$index}}" value="{{$keyValue.Key}}" />
+{{end}}				<input type="text" name="v_{{$index}}" value="{{$keyValue.Value}}" />
+{{if ne $keyValue.Key ""}}				<button form="delete_{{$index}}">&#10062;</button>
+{{end}}				<br />
 {{end}}
 				<input type="submit" value="Update" id="submit" />
 			</form>
-{{range $index, $keyValue := .}}
+{{range $index, $keyValue := .}}{{if ne $keyValue.Key ""}}
 			<form action="?" method="post" id="delete_{{$index}}">
 				<input type="hidden" name="delete" value="{{$keyValue.Key}}" />
 			</form>
-{{end}}
+{{end}}{{end}}

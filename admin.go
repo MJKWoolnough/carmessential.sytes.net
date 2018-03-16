@@ -13,9 +13,9 @@ type admin struct {
 	configT string
 }
 
-func (a *admin) init() {
+func (a *admin) init() error {
 	a.configT = path.Join(*filesDir, "admin", "config.tmpl")
-	Pages.RegisterTemplate(a.configT)
+	return Pages.RegisterTemplate(a.configT)
 }
 
 func (a *admin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -59,19 +59,28 @@ func (a *admin) config(w http.ResponseWriter, r *http.Request) {
 	} else {
 		for param := range r.PostForm {
 			if strings.HasPrefix(param, "k_") {
-				Config.Set(r.PostForm.Get(param), r.PostForm.Get("v_"+param[2:]))
+				key := r.PostForm.Get(param)
+				if key != "" {
+					Config.Set(key, r.PostForm.Get("v_"+param[2:]))
+				}
 			}
 		}
 	}
-	Pages.Write(w, r,
-		PageHeader{
-			Title:  "CARMEssential - Admin - Config",
-			Style:  "admin",
-			Script: "config",
-		},
-		Body{
-			Template: a.configT,
-			Data:     Config.AsSlice(),
-		},
-	)
+	if _, ok := r.PostForm["dynamic"]; !ok {
+		configSlice := Config.AsSlice()
+		if _, ok := r.PostForm["add"]; ok {
+			configSlice = append(configSlice, KeyValue{})
+		}
+		Pages.Write(w, r,
+			PageHeader{
+				Title:  "CARMEssential - Admin - Config",
+				Style:  "admin",
+				Script: "config",
+			},
+			Body{
+				Template: a.configT,
+				Data:     configSlice,
+			},
+		)
+	}
 }
