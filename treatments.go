@@ -27,9 +27,10 @@ type Treatment struct {
 }
 
 type Category struct {
-	ID    uint
-	Name  string
-	Order uint
+	ID        uint
+	Name      string
+	Order     uint
+	AdminOnly bool
 }
 
 type treatments struct {
@@ -60,7 +61,7 @@ func (t *treatments) init(db *sql.DB) error {
 	if err != nil {
 		return errors.WithContext("error creating Treatment table: ", err)
 	}
-	_, err = db.Exec("CREATE TABLE IF NOT EXISTS [Category]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Name] TEXT NOT NULL);")
+	_, err = db.Exec("CREATE TABLE IF NOT EXISTS [Category]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Name] TEXT NOT NULL, [Order] INTEGER DEFAULT 0 NOT NULL, [AdminOnly] BOOLEAN DEFAULT 0 NOT NULL);")
 	if err != nil {
 		return errors.WithContext("error creating Category table: ", err)
 	}
@@ -73,7 +74,7 @@ func (t *treatments) init(db *sql.DB) error {
 		{&t.updateTreatment, "UPDATE [Treatment] SET [Name] = ?, [Category] = ?, [Price] = ?, [Duration] = ?, [Description] = ?, [Order] = ? WHERE [ID] = ?;"},
 		{&t.removeTreatment, "DELETE FROM [Treatment] WHERE [ID] = ?;"},
 		{&t.addCategory, "INSERT INTO [Category]([Name]) VALUES (?);"},
-		{&t.updateCategory, "UPDATE [Category] SET [Name] = ? WHERE [ID] = ?;"},
+		{&t.updateCategory, "UPDATE [Category] SET [Name] = ?, [Order] = ?, [AdminOnly] = ? WHERE [ID] = ?;"},
 		{&t.removeCategory, "DELETE FROM [Category] WHERE [ID] = ?;"},
 	} {
 		*stmt.Stmt, err = db.Prepare(stmt.Query)
@@ -108,7 +109,7 @@ func (t *treatments) init(db *sql.DB) error {
 		return errors.WithContext("error closing Treatment rows: ", err)
 	}
 
-	crows, err := db.Query("SELECT [ID], [Name] FROM [Category];")
+	crows, err := db.Query("SELECT [ID], [Name], [Order], [AdminOnly] FROM [Category];")
 	if err != nil {
 		return errors.WithContext("error getting Category data: ", err)
 	}
@@ -117,7 +118,7 @@ func (t *treatments) init(db *sql.DB) error {
 
 	for crows.Next() {
 		var cat Category
-		if err = crows.Scan(&cat.ID, &cat.Name, &cat.Order); err != nil {
+		if err = crows.Scan(&cat.ID, &cat.Name, &cat.Order, &cat.AdminOnly); err != nil {
 			return errors.WithContext("error reading Category row: ", err)
 		}
 		t.categoryOrder = append(t.categoryOrder, cat.ID)
