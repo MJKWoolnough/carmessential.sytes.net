@@ -60,9 +60,10 @@ func (p *pages) makeOutputTemplate() error {
 }
 
 func (p *pages) loadMainTemplate() error {
-	bufStr, err := loadFile(filepath.Join(*filesDir, "template.tmpl"))
+	file := filepath.Join(*filesDir, "template.tmpl")
+	bufStr, err := loadFile(file)
 	if err != nil {
-		return errors.WithContext(fmt.Sprintf("error loading main template file (%q): ", p.templateF), err)
+		return errors.WithContext(fmt.Sprintf("error loading main template file (%q): ", file), err)
 	}
 	splitStr := strings.SplitN(bufStr, "{{/* TEMPLATES HERE */}}", 2)
 	if len(splitStr) != 2 {

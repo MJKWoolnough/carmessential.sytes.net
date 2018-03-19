@@ -12,15 +12,20 @@ import (
 var Admin admin
 
 type admin struct {
-	configT string
+	configT, categoriesT, treatmentsT string
 }
 
 func (a *admin) init() error {
-	a.configT = filepath.Join(*filesDir, "admin", "config.tmpl")
-	for _, tmpl := range [...]string{
-		a.configT,
+	for _, tmpl := range [...]struct {
+		template *string
+		path     string
+	}{
+		{&a.configT, filepath.Join(*filesDir, "admin", "config.tmpl")},
+		{&a.categoriesT, filepath.Join(*filesDir, "admin", "categories.tmpl")},
+		{&a.treatmentsT, filepath.Join(*filesDir, "admin", "treatments.tmpl")},
 	} {
-		if err := Pages.RegisterTemplate(tmpl); err != nil {
+		*tmpl.template = tmpl.path
+		if err := Pages.RegisterTemplate(tmpl.path); err != nil {
 			return errors.WithContext("error registering admin template: ", err)
 		}
 	}
@@ -99,6 +104,7 @@ func (a *admin) config(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *admin) categories(w http.ResponseWriter, r *http.Request) {
+
 }
 
 func (a *admin) treatments(w http.ResponseWriter, r *http.Request) {
