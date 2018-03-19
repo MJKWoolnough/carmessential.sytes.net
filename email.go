@@ -10,15 +10,19 @@ import (
 var Email email
 
 type email struct {
-	addr string
-	auth smtp.Auth
-	from string
+	addr, from string
+	auth       smtp.Auth
 }
 
-func (e *email) init(addr, from string, auth smtp.Auth) error {
-	e.addr = addr
-	e.auth = auth
-	e.from = from
+func (e *email) init() error {
+	e.addr = Config.Get("emailSMTP")
+	e.from = Config.Get("emailLogin")
+	e.auth = smtp.PlainAuth(
+		"",
+		Config.Get("emailLogin"),
+		Config.Get("emailPassword"),
+		Config.Get("emailHost"),
+	)
 	return nil
 }
 

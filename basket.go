@@ -2,14 +2,14 @@ package main
 
 import (
 	"io"
-	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/MJKWoolnough/errors"
 )
 
-func BasketInit(filePath string) error {
-	if err := Pages.RegisterTemplate(path.Join(filePath, "basket.tmpl")); err != nil {
+func BasketInit() error {
+	if err := Pages.RegisterTemplate(filepath.Join(*filesDir, "basket.tmpl")); err != nil {
 		return errors.WithContext("error registering basket template: ", err)
 	}
 	// register types

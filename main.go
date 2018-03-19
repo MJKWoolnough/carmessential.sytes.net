@@ -4,10 +4,9 @@ import (
 	"flag"
 	"log"
 	"net/http"
-	"net/smtp"
 	"os"
 	"os/signal"
-	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/MJKWoolnough/httpbuffer"
@@ -29,7 +28,7 @@ func main() {
 	flag.Parse()
 	logger = log.New(os.Stderr, *logName, log.LstdFlags)
 
-	if err := DB.init(*databaseFile); err != nil {
+	if err := DB.init(); err != nil {
 		logger.Printf("error while opening database: %s\n", err)
 		return
 	}
@@ -42,39 +41,24 @@ func main() {
 			}
 		}
 	}
-	if err := Email.init(
-		Config.Get("emailSMTP"),
-		Config.Get("emailLogin"),
-		smtp.PlainAuth(
-			"",
-			Config.Get("emailLogin"),
-			Config.Get("emailPassword"),
-			Config.Get("emailHost"),
-		),
-	); err != nil {
+	if err := Email.init(); err != nil {
 		log.Printf("error initialising Email: %s\n", err)
 		return
 	}
-	if err := Session.init(Config.Get("sessionKey"), Config.Get("basketKey")); err != nil {
+	if err := Session.init(); err != nil {
 		log.Printf("error initialising Sessions: %s\n", err)
 		return
 	}
-	if err := Pages.init(path.Join(*filesDir, "template.tmpl")); err != nil {
+	if err := Pages.init(); err != nil {
 		log.Printf("error while opening templates: %s\n", err)
 		return
 	}
-	if err := BasketInit(*filesDir); err != nil {
+	if err := BasketInit(); err != nil {
 		logger.Printf("error initialising Basket: %s\n", err)
 		return
 	}
 
-	if err := User.init(
-		path.Join(*filesDir, "login.tmpl"),
-		path.Join(*filesDir, "register.tmpl"),
-		path.Join(*filesDir, "email.tmpl"),
-		Config.Get("emailFrom"),
-		Config.Get("registrationKey"),
-	); err != nil {
+	if err := User.init(); err != nil {
 		log.Printf("error while opening user templates: %s\n", err)
 		return
 	}
@@ -98,9 +82,9 @@ func main() {
 	wrapped.Handle("/login.html", http.HandlerFunc(User.Login))
 	wrapped.Handle("/logout.html", http.HandlerFunc(User.Logout))
 	wrapped.Handle("/register.html", http.HandlerFunc(User.Register))
-	wrapped.Handle("/terms.html", NewPageFile("CARMEssential - Terms &amp; Conditions", "terms", "", path.Join(*filesDir, "terms.html"), true))
-	wrapped.Handle("/about.html", NewPageFile("CARMEssential - About Me", "about", "", path.Join(*filesDir, "about.html"), true))
-	wrapped.Handle("/", NewPageFile("CARMEssential", "home", "", path.Join(*filesDir, "index.html"), true))
+	wrapped.Handle("/terms.html", NewPageFile("CARMEssential - Terms &amp; Conditions", "terms", "", filepath.Join(*filesDir, "terms.html"), true))
+	wrapped.Handle("/about.html", NewPageFile("CARMEssential - About Me", "about", "", filepath.Join(*filesDir, "about.html"), true))
+	wrapped.Handle("/", NewPageFile("CARMEssential", "home", "", filepath.Join(*filesDir, "index.html"), true))
 	http.Handle("/assets/", http.FileServer(http.Dir(*filesDir)))
 	//http.Handle("/checkout.html", Pages.SemiWrap(basket))
 	http.Handle("/", httpbuffer.Handler{wrapped})

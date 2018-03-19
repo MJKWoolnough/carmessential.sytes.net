@@ -16,10 +16,10 @@ type db struct {
 	*sql.DB
 }
 
-func (db *db) init(filename string) error {
-	database, err := sql.Open("sqlite3", filename)
+func (db *db) init() error {
+	database, err := sql.Open("sqlite3", *databaseFile)
 	if err != nil {
-		return errors.WithContext(fmt.Sprintf("error opening database file %q: ", filename), err)
+		return errors.WithContext(fmt.Sprintf("error opening database file %q: ", *databaseFile), err)
 	}
 	if err = Config.init(database); err != nil {
 		return errors.WithContext("error initialising Config: ", err)

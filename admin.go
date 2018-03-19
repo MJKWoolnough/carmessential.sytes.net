@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
-	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/MJKWoolnough/errors"
@@ -16,7 +16,7 @@ type admin struct {
 }
 
 func (a *admin) init() error {
-	a.configT = path.Join(*filesDir, "admin", "config.tmpl")
+	a.configT = filepath.Join(*filesDir, "admin", "config.tmpl")
 	for _, tmpl := range [...]string{
 		a.configT,
 	} {
@@ -99,7 +99,6 @@ func (a *admin) config(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *admin) categories(w http.ResponseWriter, r *http.Request) {
-
 }
 
 func (a *admin) treatments(w http.ResponseWriter, r *http.Request) {

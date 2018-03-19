@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -20,7 +21,6 @@ const OutputTemplate = "Output"
 type pages struct {
 	mu           sync.RWMutex
 	templateT    *template.Template
-	templateF    string
 	templateData [2]string
 	templates    []string
 }
@@ -43,12 +43,11 @@ func loadFile(filename string) (string, error) {
 	return string(buf), nil
 }
 
-func (p *pages) init(templateFile string) error {
+func (p *pages) init() error {
 	p.templateT = template.New("")
 	if err := p.makeOutputTemplate(); err != nil {
 		return err
 	}
-	p.templateF = templateFile
 	return p.loadMainTemplate()
 }
 
@@ -61,7 +60,7 @@ func (p *pages) makeOutputTemplate() error {
 }
 
 func (p *pages) loadMainTemplate() error {
-	bufStr, err := loadFile(p.templateF)
+	bufStr, err := loadFile(filepath.Join(*filesDir, "template.tmpl"))
 	if err != nil {
 		return errors.WithContext(fmt.Sprintf("error loading main template file (%q): ", p.templateF), err)
 	}

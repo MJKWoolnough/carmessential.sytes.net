@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"html/template"
 	"net/http"
+	"path/filepath"
 	"time"
 
 	"github.com/MJKWoolnough/authenticate"
@@ -20,25 +21,26 @@ type user struct {
 	registerCodec     *authenticate.Codec
 }
 
-func (u *user) init(login, register, email, from, registerKey string) error {
-	err := Pages.RegisterTemplate(login)
+func (u *user) init() error {
+	u.loginT = filepath.Join(*filesDir, "login.tmpl")
+	u.registerT = filepath.Join(*filesDir, "register.tmpl")
+	u.from = Config.Get("emailFrom")
+	err := Pages.RegisterTemplate(u.loginT)
 	if err != nil {
 		return errors.WithContext("error registering Login template: ", err)
 	}
-	err = Pages.RegisterTemplate(register)
+	err = Pages.RegisterTemplate(u.registerT)
 	if err != nil {
 		return errors.WithContext("error registering Register template: ", err)
 	}
-	u.emailT, err = template.ParseFiles(email)
+	u.emailT, err = template.ParseFiles(filepath.Join(*filesDir, "email.tmpl"))
 	if err != nil {
 		return errors.WithContext("error registering Email template: ", err)
 	}
-	u.registerCodec, err = authenticate.NewCodec([]byte(registerKey), time.Hour*24)
+	u.registerCodec, err = authenticate.NewCodec([]byte(Config.Get("registrationKey")), time.Hour*24)
 	if err != nil {
 		return errors.WithContext("error creating registration authenticator: ", err)
 	}
-	u.loginT = login
-	u.registerT = register
 	return nil
 }
 
