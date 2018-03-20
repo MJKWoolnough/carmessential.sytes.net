@@ -1,0 +1,11 @@
+			<h2>Categories</h2>
+			<form action="?" method="post">
+				<input type="submit" name="set" value="+" />
+			</form>
+			<br />{{if .}}
+			<form action="?" method="post">
+				<select name="id">
+{{range $cat := .}}				<option value={{$cat.ID}}>{{$cat.Name}}</option>
+{{end}}				</select>
+				<input type="submit" name="set" value="Edit" />
+			</form>{{end}}

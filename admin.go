@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/MJKWoolnough/errors"
@@ -12,7 +13,7 @@ import (
 var Admin admin
 
 type admin struct {
-	configT, categoriesT, treatmentsT string
+	configT, categoriesT, editCategoryT, treatmentsT string
 }
 
 func (a *admin) init() error {
@@ -22,6 +23,7 @@ func (a *admin) init() error {
 	}{
 		{&a.configT, filepath.Join(*filesDir, "admin", "config.tmpl")},
 		{&a.categoriesT, filepath.Join(*filesDir, "admin", "categories.tmpl")},
+		{&a.editCategoryT, filepath.Join(*filesDir, "admin", "editCategory.tmpl")},
 		{&a.treatmentsT, filepath.Join(*filesDir, "admin", "treatments.tmpl")},
 	} {
 		*tmpl.template = tmpl.path
@@ -104,7 +106,36 @@ func (a *admin) config(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *admin) categories(w http.ResponseWriter, r *http.Request) {
-
+	r.ParseForm()
+	if _, ok := r.PostForm["set"]; ok {
+		id, err := strconv.ParseUint(r.PostForm.Get("id"), 10, 64)
+		if err == nil {
+			category, exists := Treatments.GetCategory(id)
+			if exists || id == 0 {
+				Pages.Write(w, r,
+					PageHeader{
+						Title: "CARMEssential - Admin - Edit Category",
+						Style: "admin",
+					},
+					Body{
+						Template: a.editCategoryT,
+						Data:     category,
+					},
+				)
+				return
+			}
+		}
+	}
+	Pages.Write(w, r,
+		PageHeader{
+			Title: "CARMEssential - Admin - Categories",
+			Style: "admin",
+		},
+		Body{
+			Template: a.categoriesT,
+			Data:     Treatments.categories,
+		},
+	)
 }
 
 func (a *admin) treatments(w http.ResponseWriter, r *http.Request) {

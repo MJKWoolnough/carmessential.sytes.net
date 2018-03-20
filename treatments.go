@@ -192,3 +192,19 @@ func (t *treatments) UpdateDescription(id uint, desc string) {
 	buf := make(memio.Buffer, 0, 1<<20)
 	bbcode.ConvertString(&buf, desc)
 }
+
+func (t *treatments) GetCategory(id uint) (Category, bool) {
+	c, ok := t.categories[id]
+	if ok {
+		return *c, ok
+	}
+	return Category{}, false
+}
+
+func (t *treatments) GetCategories() []Category {
+	cats := make([]Category, 0, len(t.categories))
+	for _, o := range t.categoryOrder {
+		cats = append(cats, t.categories[o])
+	}
+	return cats
+}

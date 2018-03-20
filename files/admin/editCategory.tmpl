@@ -1,0 +1,8 @@
+			<h2>{{if eq .ID 0}}Add{{else}}Edit{{end}} Category</h2>
+			<form action="?" method="post">
+				<input type="hidden" name="id" value="{{.ID}}" />
+				<label for="name">Name</label><input type="text" id="name" name="name" value="{{.Name}}" />{{if ne .NameError ""}}<div class="error">{{.NameError}}</div>{{end}}<br />
+				<label for="order">Order</label><input type="number" id="order" name="order" min="0" value="{{.Order}}" />{{if ne .OrderError ""}}<div class="error">{{.OrderError}}</div>{{end}}<br />
+				<label for="adminOnly">Admin Only?</label><input type="checkbox" id="adminOnly" name="adminOnly" value="{{if .AdminOnly}}checked{{end}}" /><br />
+				<input type="submit" name="set" value="{{if eq .ID 0}}Add{{else}}Edit{{end}}" />
+			</form>
