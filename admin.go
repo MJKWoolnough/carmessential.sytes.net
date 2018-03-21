@@ -108,9 +108,16 @@ func (a *admin) config(w http.ResponseWriter, r *http.Request) {
 func (a *admin) categories(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	if _, ok := r.PostForm["set"]; ok {
-		id, err := strconv.ParseUint(r.PostForm.Get("id"), 10, 64)
+		idStr := r.PostForm.Get("id")
+		var (
+			id  uint64
+			err error
+		)
+		if idStr != "" {
+			id, err = strconv.ParseUint(idStr, 10, 64)
+		}
 		if err == nil {
-			category, exists := Treatments.GetCategory(id)
+			category, exists := Treatments.GetCategory(uint(id))
 			if exists || id == 0 {
 				Pages.Write(w, r,
 					PageHeader{
@@ -119,7 +126,12 @@ func (a *admin) categories(w http.ResponseWriter, r *http.Request) {
 					},
 					Body{
 						Template: a.editCategoryT,
-						Data:     category,
+						Data: struct {
+							Category
+							NameError, OrderError string
+						}{
+							Category: category,
+						},
 					},
 				)
 				return

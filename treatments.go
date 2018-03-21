@@ -204,7 +204,7 @@ func (t *treatments) GetCategory(id uint) (Category, bool) {
 func (t *treatments) GetCategories() []Category {
 	cats := make([]Category, 0, len(t.categories))
 	for _, o := range t.categoryOrder {
-		cats = append(cats, t.categories[o])
+		cats = append(cats, *t.categories[o])
 	}
 	return cats
 }
