@@ -17,7 +17,7 @@ type sess struct {
 	loginStore, basketStore *sessions.CookieStore
 }
 
-func (s *sess) init() error {
+func (s *sess) Init() error {
 	var err error
 	s.loginStore, err = sessions.NewCookieStore([]byte(Config.Get("sessionKey")), sessions.HTTPOnly(), sessions.Name("session"), sessions.Expiry(time.Hour*24*30))
 	if err != nil {

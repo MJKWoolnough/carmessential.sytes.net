@@ -20,7 +20,7 @@ type users struct {
 	userID, userHash, createUser, updatePassword, updateEmail, getUserName *sql.Stmt
 }
 
-func (u *users) init(db *sql.DB) error {
+func (u *users) Init(db *sql.DB) error {
 	_, err := db.Exec("CREATE TABLE IF NOT EXISTS [User]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Name] TEXT NOT NULL, [EmailAddress] TEXT NOT NULL, [Password] BLOB NOT NULL, [Phone] TEXT NOT NULL DEFAULT '');")
 	if err != nil {
 		return errors.WithContext("error creating User table: ", err)

@@ -1,11 +1,11 @@
+{{block "main" .}}<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<title>{{.Title}}</title>
+		<title>{{block "title" .Body}}CARM Essential{{end}}</title>
 		<link rel="icon" href="/favicon.ico" type="image/x-icon" />
 		<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
-		<link rel="stylesheet" type="text/css" media="screen" title="Default Style" href="/assets/styles/{{.Style}}.css" />
-{{if ne .Script ""}}		<script type="text/javascript" src="/assets/scripts/{{.Script}}.js"></script>
-{{end}}	</head>
+		<link rel="stylesheet" type="text/css" media="screen" title="Default Style" href="/assets/styles/{{block "style" .Body}}default{{end}}.css" /> {{block "additionalHeaders" .Body}}{{end}}
+	</head>
 	<body>
 		<div id="site-header">
 			<div>
@@ -56,11 +56,11 @@
 				</li>
 			</ul>
 		</div>
-		<div id="leftmenu">
-{{if not .Basket.IsEmpty}}			{{.Basket.Print}}{{end}}
-		</div>
+		<div id="leftmenu">{{block "sidebar" .}}{{if not .Basket.IsEmpty}}
+			{{.Basket.Print}}
+		{{end}}{{end}}</div>
 		<div id="contentblock">
-{{/* TEMPLATES HERE */}}
+{{block "body" .Body}}{{.}}{{end}}
 		</div>
 	</body>
-</html>
+</html>{{end}}

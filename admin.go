@@ -16,15 +16,15 @@ type admin struct {
 	configT, categoriesT, editCategoryT, treatmentsT string
 }
 
-func (a *admin) init() error {
+func (a *admin) Init() error {
 	for _, tmpl := range [...]struct {
 		template *string
 		path     string
 	}{
-		{&a.configT, filepath.Join(*filesDir, "admin", "config.tmpl")},
-		{&a.categoriesT, filepath.Join(*filesDir, "admin", "categories.tmpl")},
-		{&a.editCategoryT, filepath.Join(*filesDir, "admin", "editCategory.tmpl")},
-		{&a.treatmentsT, filepath.Join(*filesDir, "admin", "treatments.tmpl")},
+		{&a.configT, filepath.Join("admin", "config.tmpl")},
+		{&a.categoriesT, filepath.Join("admin", "categories.tmpl")},
+		{&a.editCategoryT, filepath.Join("admin", "editCategory.tmpl")},
+		{&a.treatmentsT, filepath.Join("admin", "treatments.tmpl")},
 	} {
 		*tmpl.template = tmpl.path
 		if err := Pages.RegisterTemplate(tmpl.path); err != nil {
@@ -60,16 +60,7 @@ func (a *admin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *admin) index(w http.ResponseWriter, r *http.Request) {
-	Pages.Write(w, r,
-		PageHeader{
-			Title: "CARMEssential - Admin",
-			Style: "admin",
-		},
-		Body{
-			Template: OutputTemplate,
-			Data:     "ADMIN INDEX",
-		},
-	)
+	Pages.Write(w, r, "", "ADMIN INDEX")
 }
 
 func (a *admin) config(w http.ResponseWriter, r *http.Request) {
@@ -91,17 +82,7 @@ func (a *admin) config(w http.ResponseWriter, r *http.Request) {
 		if _, ok := r.PostForm["add"]; ok {
 			configSlice = append(configSlice, KeyValue{})
 		}
-		Pages.Write(w, r,
-			PageHeader{
-				Title:  "CARMEssential - Admin - Config",
-				Style:  "admin",
-				Script: "config",
-			},
-			Body{
-				Template: a.configT,
-				Data:     configSlice,
-			},
-		)
+		Pages.Write(w, r, a.configT, configSlice)
 	}
 }
 
@@ -119,35 +100,19 @@ func (a *admin) categories(w http.ResponseWriter, r *http.Request) {
 		if err == nil {
 			category, exists := Treatments.GetCategory(uint(id))
 			if exists || id == 0 {
-				Pages.Write(w, r,
-					PageHeader{
-						Title: "CARMEssential - Admin - Edit Category",
-						Style: "admin",
-					},
-					Body{
-						Template: a.editCategoryT,
-						Data: struct {
-							Category
-							NameError, OrderError string
-						}{
-							Category: category,
-						},
+				Pages.Write(w, r, a.editCategoryT,
+					struct {
+						Category
+						NameError, OrderError string
+					}{
+						Category: category,
 					},
 				)
 				return
 			}
 		}
 	}
-	Pages.Write(w, r,
-		PageHeader{
-			Title: "CARMEssential - Admin - Categories",
-			Style: "admin",
-		},
-		Body{
-			Template: a.categoriesT,
-			Data:     Treatments.categories,
-		},
-	)
+	Pages.Write(w, r, a.categoriesT, Treatments.categories)
 }
 
 func (a *admin) treatments(w http.ResponseWriter, r *http.Request) {

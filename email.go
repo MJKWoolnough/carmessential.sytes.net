@@ -14,7 +14,7 @@ type email struct {
 	auth       smtp.Auth
 }
 
-func (e *email) init() error {
+func (e *email) Init() error {
 	e.addr = Config.Get("emailSMTP")
 	e.from = Config.Get("emailLogin")
 	e.auth = smtp.PlainAuth(

@@ -17,7 +17,7 @@ type config struct {
 	data map[string]string
 }
 
-func (c *config) init(db *sql.DB) error {
+func (c *config) Init(db *sql.DB) error {
 	_, err := db.Exec("CREATE TABLE IF NOT EXISTS [Config]([Key] TEXT NOT NULL, [Value] TEXT NOT NULL DEFAULT '');")
 	if err != nil {
 		return errors.WithContext("error creating Config table: ", err)

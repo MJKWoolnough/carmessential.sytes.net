@@ -16,18 +16,18 @@ type db struct {
 	*sql.DB
 }
 
-func (db *db) init() error {
+func (db *db) Init() error {
 	database, err := sql.Open("sqlite3", *databaseFile)
 	if err != nil {
 		return errors.WithContext(fmt.Sprintf("error opening database file %q: ", *databaseFile), err)
 	}
-	if err = Config.init(database); err != nil {
+	if err = Config.Init(database); err != nil {
 		return errors.WithContext("error initialising Config: ", err)
 	}
-	if err = Treatments.init(database); err != nil {
+	if err = Treatments.Init(database); err != nil {
 		return errors.WithContext("error initialising Treatments: ", err)
 	}
-	if err = Users.init(database); err != nil {
+	if err = Users.Init(database); err != nil {
 		return errors.WithContext("error initialising Users: ", err)
 	}
 	db.DB = database

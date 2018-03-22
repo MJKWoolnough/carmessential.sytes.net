@@ -15,21 +15,18 @@ import (
 var User user
 
 type user struct {
-	loginT, registerT string
-	emailT            *template.Template
-	from              string
-	registerCodec     *authenticate.Codec
+	emailT        *template.Template
+	from          string
+	registerCodec *authenticate.Codec
 }
 
-func (u *user) init() error {
-	u.loginT = filepath.Join(*filesDir, "login.tmpl")
-	u.registerT = filepath.Join(*filesDir, "register.tmpl")
+func (u *user) Init() error {
 	u.from = Config.Get("emailFrom")
-	err := Pages.RegisterTemplate(u.loginT)
+	err := Pages.RegisterTemplate("login.tmpl")
 	if err != nil {
 		return errors.WithContext("error registering Login template: ", err)
 	}
-	err = Pages.RegisterTemplate(u.registerT)
+	err = Pages.RegisterTemplate("register.tmpl")
 	if err != nil {
 		return errors.WithContext("error registering Register template: ", err)
 	}
@@ -53,23 +50,7 @@ func (u *user) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/admin/", http.StatusFound)
 		return
 	}
-	Pages.Write(w, r,
-		PageHeader{
-			Title:       "CARMEssential - User Area",
-			Style:       "user",
-			WriteBasket: true,
-		},
-		Body{
-			Template: OutputTemplate,
-			Data:     "USER INDEX",
-		},
-	)
-}
-
-var registerPH = PageHeader{
-	Title:       "CARMEssential - Register",
-	Style:       "user",
-	WriteBasket: true,
+	Pages.Write(w, r, OutputTemplate, "USER INDEX")
 }
 
 func isValidPassword(password string) bool {
@@ -147,16 +128,7 @@ func (u *user) Register(w http.ResponseWriter, r *http.Request) {
 			form.Error = "Invalid Email Address"
 		}
 	}
-	Pages.Write(w, r, registerPH, Body{
-		Template: u.registerT,
-		Data:     &form,
-	})
-}
-
-var loginPH = PageHeader{
-	Title:       "CARMEssential - Login",
-	Style:       "user",
-	WriteBasket: true,
+	Pages.Write(w, r, "register.tmpl", &form)
 }
 
 func (u *user) Login(w http.ResponseWriter, r *http.Request) {
@@ -183,10 +155,7 @@ func (u *user) Login(w http.ResponseWriter, r *http.Request) {
 		}
 		form.Error = "Unknown Email Address or Invalid Password"
 	}
-	Pages.Write(w, r, loginPH, Body{
-		Template: u.loginT,
-		Data:     &form,
-	})
+	Pages.Write(w, r, "login.tmpl", &form)
 }
 
 func (u *user) Logout(w http.ResponseWriter, r *http.Request) {

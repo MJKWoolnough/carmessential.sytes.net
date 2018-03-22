@@ -3,11 +3,10 @@ package main
 import (
 	"fmt"
 	"html/template"
-	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
@@ -19,204 +18,119 @@ var Pages pages
 const OutputTemplate = "Output"
 
 type pages struct {
-	mu           sync.RWMutex
-	templateT    *template.Template
-	templateData [2]string
-	templates    []string
+	mu              sync.RWMutex
+	defaultTemplate *template.Template
+	templates       map[string]*template.Template
 }
 
-func loadFile(filename string) (string, error) {
-	f, err := os.Open(filename)
+func (p *pages) registerTemplate(name, filename string) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	templateSrc, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return "", err
+		return errors.WithContext(fmt.Sprintf("error loading template (%q): ", filename), err)
 	}
-	defer f.Close()
-	stat, err := f.Stat()
+	dtc, err := p.defaultTemplate.Clone()
 	if err != nil {
-		return "", err
+		return errors.WithContext(fmt.Sprintf("error cloning template (%q): ", filename), err)
 	}
-	buf := make([]byte, stat.Size())
-	_, err = io.ReadFull(f, buf)
+	p.templates[name], err = dtc.Parse(string(templateSrc))
 	if err != nil {
-		return "", err
-	}
-	return string(buf), nil
-}
-
-func (p *pages) init() error {
-	p.templateT = template.New("")
-	if err := p.makeOutputTemplate(); err != nil {
-		return err
-	}
-	return p.loadMainTemplate()
-}
-
-func (p *pages) makeOutputTemplate() error {
-	_, err := p.templateT.New(OutputTemplate).Parse("{{.}}")
-	if err != nil {
-		return errors.WithContext("error creating Output template: ", err)
+		return errors.WithContext(fmt.Sprintf("error initialising template (%q): ", filename), err)
 	}
 	return nil
 }
 
-func (p *pages) loadMainTemplate() error {
-	file := filepath.Join(*filesDir, "template.tmpl")
-	bufStr, err := loadFile(file)
+func (p *pages) Init() error {
+	templateSrc, err := ioutil.ReadFile(filepath.Join(*filesDir, "template.tmpl"))
 	if err != nil {
-		return errors.WithContext(fmt.Sprintf("error loading main template file (%q): ", file), err)
+		return errors.WithContext(fmt.Sprintf("error loading template (%q): ", "template.tmpl"), err)
 	}
-	splitStr := strings.SplitN(bufStr, "{{/* TEMPLATES HERE */}}", 2)
-	if len(splitStr) != 2 {
-		return errors.Error("invalid template")
-	}
-	p.templateData[0] = splitStr[0]
-	p.templateData[1] = splitStr[1]
-	return p.buildMain()
-}
-
-var mainTemplateBuilder strings.Builder
-
-func (p *pages) buildMain() error {
-	mainTemplateBuilder.Reset()
-	fmt.Fprintf(&mainTemplateBuilder, "%[1]s{{if eq .Body.Template %[2]q}}{{template %[2]q .Body.Data}}", p.templateData[0], OutputTemplate)
-	for _, tmpl := range p.templates {
-		fmt.Fprintf(&mainTemplateBuilder, "{{else if eq .Body.Template %[1]q}}{{template %[1]q .Body.Data}}", tmpl)
-	}
-	fmt.Fprintf(&mainTemplateBuilder, "{{end}}%s", p.templateData[1])
-	if _, err := p.templateT.Parse(mainTemplateBuilder.String()); err != nil {
-		return errors.WithContext("error building main template: ", err)
-	}
-	return nil
-}
-
-func (p *pages) registerTemplate(filename string) error {
-	data, err := loadFile(filename)
+	p.defaultTemplate, err = template.New("").Parse(string(templateSrc))
 	if err != nil {
-		return errors.WithContext(fmt.Sprintf("error loading template file (%q): ", filename), err)
+		return errors.WithContext(fmt.Sprintf("error initialising template (%q): ", "template.tmpl"), err)
 	}
-	if _, err = p.templateT.New(filename).Parse(data); err != nil {
-		return errors.WithContext(fmt.Sprintf("error parsing template %q: ", filename), err)
-	}
+	p.templates = map[string]*template.Template{"": p.defaultTemplate}
+	dtc, _ := p.defaultTemplate.Clone()
+	dtc.Parse("{{define \"title\"}}{{.Title}}{{end}}{{define \"style\"}}{{.Style}}{{end}}{{define \"body\"}}{{.Body}}{{end}}")
+	p.templates["dynamic"] = dtc
 	return nil
 }
 
 func (p *pages) RegisterTemplate(filename string) error {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	if err := p.registerTemplate(filename); err != nil {
-		return err
-	}
-	p.templates = append(p.templates, filename)
-	err := p.buildMain()
-	return err
+	return p.registerTemplate(filename, filepath.Join(*filesDir, filename))
 }
 
 func (p *pages) Rebuild() error {
-	old := p.templateT
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.templateT = template.New("")
-	if err := p.makeOutputTemplate(); err != nil {
-		p.templateT = old
-		return err
-	}
-	for _, tmpl := range p.templates {
-		if err := p.registerTemplate(tmpl); err != nil {
-			p.templateT = old
-			return err
-		}
-	}
-	if err := p.loadMainTemplate(); err != nil {
-		p.templateT = old
-		return err
-	}
 	return nil
 }
 
-func (p *pages) Write(w http.ResponseWriter, r *http.Request, ph PageHeader, body Body) {
+func (p *pages) Write(w http.ResponseWriter, r *http.Request, templateName string, body interface{}) {
 	w.Header().Set("Content-Type", "text/html")
 	userID, ok := r.Context().Value("userID").(int64)
 	if !ok {
 		userID = Session.GetLogin(r)
 	}
-	var basket *Basket
-	if ph.WriteBasket {
-		basket, ok = r.Context().Value("basket").(*Basket)
-		if !ok {
-			basket = Session.LoadBasket(r)
-		}
+	basket, ok := r.Context().Value("basket").(*Basket)
+	if !ok {
+		basket = Session.LoadBasket(r)
 	}
 	p.mu.RLock()
-	if err := p.templateT.Execute(w, struct {
+	tmpl, ok := p.templates[templateName]
+	if !ok {
+		tmpl = p.defaultTemplate
+	}
+	if err := tmpl.Execute(w, struct {
 		LoggedIn bool
-		PageHeader
 		*Basket
-		Body
+		Body interface{}
 	}{
-		LoggedIn:   userID > 0,
-		PageHeader: ph,
-		Basket:     basket,
-		Body:       body,
+		LoggedIn: userID > 0,
+		Basket:   basket,
+		Body:     body,
 	}); err != nil {
 		logger.Printf("error writing template: %s", err)
 	}
 	p.mu.RUnlock()
 }
 
-type Body struct {
-	Template string
-	Data     interface{}
-}
-
-type PageHeader struct {
-	Title, Style, Script string
-	WriteBasket          bool
+type pageData struct {
+	Title, Style string
+	Body         template.HTML
 }
 
 type PageBytes struct {
-	PageHeader
-	Body
+	pageData pageData
 }
 
-func NewPageBytes(title, style, script string, data template.HTML, showBasket bool) *PageBytes {
+func NewPageBytes(title, style string, body template.HTML) *PageBytes {
 	return &PageBytes{
-		PageHeader: PageHeader{
-			Title:       title,
-			Style:       style,
-			Script:      script,
-			WriteBasket: showBasket,
-		},
-		Body: Body{
-			Template: OutputTemplate,
-			Data:     data,
+		pageData: pageData{
+			Title: title,
+			Style: style,
+			Body:  body,
 		},
 	}
 }
 
 func (p *PageBytes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	Pages.Write(w, r, p.PageHeader, p.Body)
+	Pages.Write(w, r, "dynamic", p.pageData)
 }
 
 type PageFile struct {
-	mu sync.RWMutex
-	PageHeader
-	Body
+	mu           sync.RWMutex
+	pageData     pageData
 	Filename     string
 	LastModified time.Time
 }
 
-func NewPageFile(title, style, script, filename string, showBasket bool) *PageFile {
+func NewPageFile(title, style, filename string) *PageFile {
 	return &PageFile{
-		PageHeader: PageHeader{
-			Title:       title,
-			Style:       style,
-			Script:      script,
-			WriteBasket: showBasket,
+		pageData: pageData{
+			Title: title,
+			Style: style,
 		},
-		Body: Body{
-			Template: OutputTemplate,
-		},
-		Filename: filename,
+		Filename: filepath.Join(*filesDir, filename),
 	}
 }
 
@@ -235,20 +149,20 @@ func (p *PageFile) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if modtime = stats.ModTime(); modtime.After(p.LastModified) { // in case another goroutine has changed it already
-			data, err := loadFile(p.Filename)
+			data, err := ioutil.ReadFile(p.Filename)
 			if err != nil {
 				p.mu.Unlock()
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			} else {
-				p.Data = template.HTML(data)
+				p.pageData.Body = template.HTML(data)
 				p.LastModified = modtime
 			}
 		}
 		p.mu.Unlock()
 	}
 	p.mu.RLock()
-	body := p.Body
+	body := p.pageData
 	p.mu.RUnlock()
-	Pages.Write(w, r, p.PageHeader, body)
+	Pages.Write(w, r, "dynamic", body)
 }

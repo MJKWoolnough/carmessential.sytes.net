@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strings"
 
 	"github.com/MJKWoolnough/httpbuffer"
@@ -28,7 +27,7 @@ func main() {
 	flag.Parse()
 	logger = log.New(os.Stderr, *logName, log.LstdFlags)
 
-	if err := DB.init(); err != nil {
+	if err := DB.Init(); err != nil {
 		logger.Printf("error while opening database: %s\n", err)
 		return
 	}
@@ -41,30 +40,18 @@ func main() {
 			}
 		}
 	}
-	if err := Email.init(); err != nil {
-		log.Printf("error initialising Email: %s\n", err)
-		return
-	}
-	if err := Session.init(); err != nil {
-		log.Printf("error initialising Sessions: %s\n", err)
-		return
-	}
-	if err := Pages.init(); err != nil {
-		log.Printf("error while opening templates: %s\n", err)
-		return
-	}
-	if err := BasketInit(); err != nil {
-		logger.Printf("error initialising Basket: %s\n", err)
-		return
-	}
-
-	if err := User.init(); err != nil {
-		log.Printf("error while opening user templates: %s\n", err)
-		return
-	}
-	if err := Admin.init(); err != nil {
-		logger.Printf("error initialising Admin: %s\n", err)
-		return
+	for _, init := range [...]func() error{
+		Email.Init,
+		Session.Init,
+		Pages.Init,
+		BasketInit,
+		User.Init,
+		Admin.Init,
+	} {
+		if err := init(); err != nil {
+			log.Printf("error during initialisation: %s\n", err)
+			return
+		}
 	}
 
 	// load items from database
@@ -82,9 +69,9 @@ func main() {
 	wrapped.Handle("/login.html", http.HandlerFunc(User.Login))
 	wrapped.Handle("/logout.html", http.HandlerFunc(User.Logout))
 	wrapped.Handle("/register.html", http.HandlerFunc(User.Register))
-	wrapped.Handle("/terms.html", NewPageFile("CARMEssential - Terms &amp; Conditions", "terms", "", filepath.Join(*filesDir, "terms.html"), true))
-	wrapped.Handle("/about.html", NewPageFile("CARMEssential - About Me", "about", "", filepath.Join(*filesDir, "about.html"), true))
-	wrapped.Handle("/", NewPageFile("CARMEssential", "home", "", filepath.Join(*filesDir, "index.html"), true))
+	wrapped.Handle("/terms.html", NewPageFile("CARMEssential - Terms & Conditions", "terms", "terms.html"))
+	wrapped.Handle("/about.html", NewPageFile("CARMEssential - About Me", "about", "about.html"))
+	wrapped.Handle("/", NewPageFile("CARMEssential", "default", "index.html"))
 	http.Handle("/assets/", http.FileServer(http.Dir(*filesDir)))
 	//http.Handle("/checkout.html", Pages.SemiWrap(basket))
 	http.Handle("/", httpbuffer.Handler{wrapped})
