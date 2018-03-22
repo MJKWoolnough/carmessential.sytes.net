@@ -24,8 +24,6 @@ type pages struct {
 }
 
 func (p *pages) registerTemplate(name, filename string) error {
-	p.mu.Lock()
-	defer p.mu.Unlock()
 	templateSrc, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return errors.WithContext(fmt.Sprintf("error loading template (%q): ", filename), err)
