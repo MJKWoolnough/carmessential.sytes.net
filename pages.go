@@ -50,7 +50,7 @@ func (p *pages) Init() error {
 	}
 	p.templates = map[string]*template.Template{"": p.defaultTemplate}
 	dtc, _ := p.defaultTemplate.Clone()
-	dtc.Parse("{{define \"title\"}}{{.Title}}{{end}}{{define \"style\"}}{{.Style}}{{end}}{{define \"body\"}}{{.Body}}{{end}}")
+	dtc.Parse("{{define \"title\"}}{{.Title}}{{end}}{{define \"style\"}}{{.Style}}{{end}}{{define \"body\"}}\n{{.Body}}{{end}}")
 	p.templates["dynamic"] = dtc
 	return nil
 }
