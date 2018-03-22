@@ -62,6 +62,28 @@ func (p *pages) RegisterTemplate(filename string) error {
 }
 
 func (p *pages) Rebuild() error {
+	p.mu.Lock()
+	oldTemplate := p.defaultTemplate
+	oldTemplates := p.templates
+	if err := p.Init(); err != nil {
+		p.defaultTemplate = oldTemplate
+		p.templates = oldTemplates
+		p.mu.Unlock()
+		return errors.WithContext("error reloading templates: ", err)
+	}
+	for filename := range oldTemplates {
+		switch filename {
+		case "", "dynamic":
+		default:
+			if err := p.RegisterTemplate(filename); err != nil {
+				p.defaultTemplate = oldTemplate
+				p.templates = oldTemplates
+				p.mu.Unlock()
+				return errors.WithContext("error reloading templates: ", err)
+			}
+		}
+	}
+	p.mu.Unlock()
 	return nil
 }
 
