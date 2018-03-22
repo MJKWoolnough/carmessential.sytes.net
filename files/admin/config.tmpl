@@ -2,7 +2,8 @@
 {{define "style"}}admin{{end}}
 {{define "additionalHeaders"}}
 		<script type="text/javascript" src="/assets/scripts/config.js"></script>{{end}}
-{{define "body"}}			<h2>Configuration Editor</h2>
+{{define "body"}}
+			<h2>Configuration Editor</h2>
 			<form action="?" method="post">
 				<input type="submit" name="add" value="+" /><br />
 			</form>
@@ -19,4 +20,5 @@
 {{range $index, $keyValue := .}}{{if ne $keyValue.Key ""}}
 			<form action="?" method="post" id="delete_{{$index}}">
 				<input type="hidden" name="delete" value="{{$keyValue.Key}}" />
-			</form>{{end}}{{end}}{{end}}
+			</form>{{end}}{{end}}
+{{end}}

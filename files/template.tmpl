@@ -59,8 +59,6 @@
 		<div id="leftmenu">{{block "sidebar" .}}{{if not .Basket.IsEmpty}}
 			{{.Basket.Print}}
 		{{end}}{{end}}</div>
-		<div id="contentblock">
-{{block "body" .Body}}{{.}}{{end}}
-		</div>
+		<div id="contentblock">{{block "body" .Body}}{{.}}{{end}}</div>
 	</body>
 </html>{{end}}
