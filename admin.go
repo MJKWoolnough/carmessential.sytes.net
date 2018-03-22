@@ -13,7 +13,7 @@ import (
 var Admin admin
 
 type admin struct {
-	indexT, configT, categoriesT, editCategoryT, treatmentsT string
+	indexT, configT, categoriesT, editCategoryT, treatmentsT, templatesT string
 }
 
 func (a *admin) Init() error {
@@ -26,6 +26,7 @@ func (a *admin) Init() error {
 		{&a.categoriesT, filepath.Join("admin", "categories.tmpl")},
 		{&a.editCategoryT, filepath.Join("admin", "editCategory.tmpl")},
 		{&a.treatmentsT, filepath.Join("admin", "treatments.tmpl")},
+		{&a.templatesT, filepath.Join("admin", "templates.tmpl")},
 	} {
 		*tmpl.template = tmpl.path
 		if err := Pages.RegisterTemplate(tmpl.path); err != nil {
@@ -55,6 +56,8 @@ func (a *admin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		a.categories(w, r)
 	case "treatments.html":
 		a.treatments(w, r)
+	case "templates.html":
+		a.templates(w, r)
 	default:
 		http.Error(w, "Not Found", http.StatusNotFound)
 	}
@@ -118,4 +121,18 @@ func (a *admin) categories(w http.ResponseWriter, r *http.Request) {
 
 func (a *admin) treatments(w http.ResponseWriter, r *http.Request) {
 
+}
+
+func (a *admin) templates(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	var data struct {
+		Updated bool
+		Error   string
+	}
+	if _, data.Updated = r.PostForm["reload"]; data.Updated {
+		if err := Pages.Rebuild(); err != nil {
+			data.Error = err.Error()
+		}
+	}
+	Pages.Write(w, r, a.templatesT, data)
 }
