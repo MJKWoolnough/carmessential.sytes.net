@@ -13,7 +13,7 @@ import (
 var Admin admin
 
 type admin struct {
-	configT, categoriesT, editCategoryT, treatmentsT string
+	indexT, configT, categoriesT, editCategoryT, treatmentsT string
 }
 
 func (a *admin) Init() error {
@@ -21,6 +21,7 @@ func (a *admin) Init() error {
 		template *string
 		path     string
 	}{
+		{&a.indexT, filepath.Join("admin", "index.tmpl")},
 		{&a.configT, filepath.Join("admin", "config.tmpl")},
 		{&a.categoriesT, filepath.Join("admin", "categories.tmpl")},
 		{&a.editCategoryT, filepath.Join("admin", "editCategory.tmpl")},
@@ -60,7 +61,7 @@ func (a *admin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *admin) index(w http.ResponseWriter, r *http.Request) {
-	Pages.Write(w, r, "", "ADMIN INDEX")
+	Pages.Write(w, r, a.indexT, "ADMIN INDEX")
 }
 
 func (a *admin) config(w http.ResponseWriter, r *http.Request) {
