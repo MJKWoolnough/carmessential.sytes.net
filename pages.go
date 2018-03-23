@@ -134,7 +134,7 @@ func NewPageBytes(title, style string, body template.HTML) *PageBytes {
 }
 
 func (p *PageBytes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	Pages.Write(w, r, "dynamic", p.pageData)
+	Pages.Write(w, r, "dynamic", &p.pageData)
 }
 
 type PageFile struct {
@@ -184,5 +184,5 @@ func (p *PageFile) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p.mu.RLock()
 	body := p.pageData
 	p.mu.RUnlock()
-	Pages.Write(w, r, "dynamic", body)
+	Pages.Write(w, r, "dynamic", &body)
 }
