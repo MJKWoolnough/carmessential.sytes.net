@@ -114,18 +114,18 @@ func (p *pages) Write(w http.ResponseWriter, r *http.Request, templateName strin
 	p.mu.RUnlock()
 }
 
-type pageData struct {
+type dynamicData struct {
 	Title, Style string
 	Body         template.HTML
 }
 
 type PageBytes struct {
-	pageData pageData
+	dynamicData dynamicData
 }
 
 func NewPageBytes(title, style string, body template.HTML) *PageBytes {
 	return &PageBytes{
-		pageData: pageData{
+		dynamicData: dynamicData{
 			Title: title,
 			Style: style,
 			Body:  body,
@@ -134,19 +134,19 @@ func NewPageBytes(title, style string, body template.HTML) *PageBytes {
 }
 
 func (p *PageBytes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	Pages.Write(w, r, "dynamic", &p.pageData)
+	Pages.Write(w, r, "dynamic", &p.dynamicData)
 }
 
 type PageFile struct {
 	mu           sync.RWMutex
-	pageData     pageData
+	dynamicData  *dynamicData
 	Filename     string
 	LastModified time.Time
 }
 
 func NewPageFile(title, style, filename string) *PageFile {
 	return &PageFile{
-		pageData: pageData{
+		dynamicData: &dynamicData{
 			Title: title,
 			Style: style,
 		},
@@ -175,14 +175,18 @@ func (p *PageFile) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			} else {
-				p.pageData.Body = template.HTML(data)
+				p.dynamicData = &dynamicData{
+					Title: p.dynamicData.Title,
+					Style: p.dynamicData.Style,
+					Body:  template.HTML(data),
+				}
 				p.LastModified = modtime
 			}
 		}
 		p.mu.Unlock()
 	}
 	p.mu.RLock()
-	body := p.pageData
+	dynamicData := p.dynamicData
 	p.mu.RUnlock()
-	Pages.Write(w, r, "dynamic", &body)
+	Pages.Write(w, r, "dynamic", dynamicData)
 }
