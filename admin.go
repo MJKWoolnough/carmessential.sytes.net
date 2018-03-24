@@ -102,21 +102,51 @@ func (a *admin) categories(w http.ResponseWriter, r *http.Request) {
 			id, err = strconv.ParseUint(idStr, 10, 64)
 		}
 		if err == nil {
-			category, exists := Treatments.GetCategory(uint(id))
+			var (
+				nameError, orderError string
+				category              Category
+				exists                bool
+			)
+			_, nameOK := r.PostForm["name"]
+			_, orderOK := r.PostForm["order"]
+			_, adminOK := r.PostForm["adminOnly"]
+			if nameOK && orderOK && adminOK {
+				exists = true
+				category.ID = uint(id)
+				category.Name = r.PostForm.Get("name")
+				if Treatments.GetCategoryID(category.Name) != category.ID {
+					nameError = "category already exists"
+				}
+				order, err := strconv.ParseUint(r.PostForm.Get("order"), 10, 64)
+				if err != nil {
+					orderError = err.Error()
+				}
+				category.Order = uint(order)
+				category.AdminOnly, _ = strconv.ParseBool(r.PostForm.Get("adminOnly"))
+				if nameError == "" && orderError == "" {
+					Treatments.SetCategory(&category)
+					http.Redirect(w, r, "/admin/categories.html", http.StatusFound)
+					return
+				}
+			} else {
+				category, exists = Treatments.GetCategory(uint(id))
+			}
 			if exists || id == 0 {
 				Pages.Write(w, r, a.editCategoryT,
 					struct {
 						Category
 						NameError, OrderError string
 					}{
-						Category: category,
+						Category:   category,
+						NameError:  nameError,
+						OrderError: orderError,
 					},
 				)
 				return
 			}
 		}
 	}
-	Pages.Write(w, r, a.categoriesT, Treatments.categories)
+	Pages.Write(w, r, a.categoriesT, Treatments.GetCategories())
 }
 
 func (a *admin) treatments(w http.ResponseWriter, r *http.Request) {
