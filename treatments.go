@@ -38,9 +38,12 @@ type treatments struct {
 	addTreatment, updateTreatment, removeTreatment *sql.Stmt
 	addCategory, updateCategory, removeCategory    *sql.Stmt
 
-	sync.RWMutex
-	treatments           map[uint]Treatment
-	categories           map[uint]Category
+	treatmu    sync.RWMutex
+	treatments map[uint]Treatment
+
+	catmu      sync.RWMutex
+	categories map[uint]Category
+
 	sidebar, page, admin template.HTML
 }
 
@@ -145,7 +148,9 @@ func (t *treatments) UpdateDescription(id uint, desc string) {
 }
 
 func (t *treatments) GetCategory(id uint) (Category, bool) {
+	t.catmu.RLock()
 	c, ok := t.categories[id]
+	t.catmu.RUnlock()
 	if ok {
 		return c, ok
 	}
@@ -153,6 +158,8 @@ func (t *treatments) GetCategory(id uint) (Category, bool) {
 }
 
 func (t *treatments) GetCategoryID(name string) uint {
+	t.catmu.RLock()
+	defer t.catmu.RUnlock()
 	for id, cat := range t.categories {
 		if strings.EqualFold(cat.Name, name) {
 			return id
@@ -180,9 +187,11 @@ func (c categories) Swap(i, j int) {
 
 func (t *treatments) GetCategories() []Category {
 	cats := make(categories, 0, len(t.categories))
+	t.catmu.RLock()
 	for _, cat := range t.categories {
 		cats = append(cats, cat)
 	}
+	t.catmu.RUnlock()
 	sort.Sort(cats)
 	return []Category(cats)
 }
@@ -195,12 +204,16 @@ func (t *treatments) SetCategory(cat *Category) {
 		res, _ := t.addCategory.Exec(cat.Name, cat.Order, cat.AdminOnly)
 		id, _ := res.LastInsertId()
 		cat.ID = uint(id)
+		t.catmu.Lock()
 		t.categories[uint(id)] = *cat
+		t.catmu.Unlock()
 	} else {
 		if cat.Order == 0 {
 			cat.Order = uint(len(t.categories))
 		}
 		t.updateCategory.Exec(cat.Name, cat.Order, cat.AdminOnly, cat.ID)
+		t.catmu.Lock()
 		t.categories[cat.ID] = *cat
+		t.catmu.Unlock()
 	}
 }
