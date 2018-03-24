@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -38,22 +39,9 @@ type treatments struct {
 	addCategory, updateCategory, removeCategory    *sql.Stmt
 
 	sync.RWMutex
-	treatments                    treatmentMap
-	categories                    categoryMap
-	treatmentOrder, categoryOrder []uint
-	sidebar, page, admin          template.HTML
-}
-
-type treatmentMap map[uint]*Treatment
-
-func (t treatmentMap) order(id uint) uint {
-	return t[id].Order
-}
-
-type categoryMap map[uint]*Category
-
-func (c categoryMap) order(id uint) uint {
-	return c[id].Order
+	treatments           map[uint]Treatment
+	categories           map[uint]Category
+	sidebar, page, admin template.HTML
 }
 
 func (t *treatments) Init(db *sql.DB) error {
@@ -73,7 +61,7 @@ func (t *treatments) Init(db *sql.DB) error {
 		{&t.addTreatment, "INSERT INTO [Treatment]([Name], [Category], [Price], [Duration], [Description], [Order]) VALUES (?, ?, ?, ?, ?, ?);"},
 		{&t.updateTreatment, "UPDATE [Treatment] SET [Name] = ?, [Category] = ?, [Price] = ?, [Duration] = ?, [Description] = ?, [Order] = ? WHERE [ID] = ?;"},
 		{&t.removeTreatment, "DELETE FROM [Treatment] WHERE [ID] = ?;"},
-		{&t.addCategory, "INSERT INTO [Category]([Name]) VALUES (?);"},
+		{&t.addCategory, "INSERT INTO [Category]([Name], [Order], [AdminOnly]) VALUES (?, ?, ?);"},
 		{&t.updateCategory, "UPDATE [Category] SET [Name] = ?, [Order] = ?, [AdminOnly] = ? WHERE [ID] = ?;"},
 		{&t.removeCategory, "DELETE FROM [Category] WHERE [ID] = ?;"},
 	} {
@@ -88,7 +76,7 @@ func (t *treatments) Init(db *sql.DB) error {
 		return errors.WithContext("error getting Treatment data: ", err)
 	}
 
-	t.treatments = make(treatmentMap)
+	t.treatments = make(map[uint]Treatment)
 
 	buf := make(memio.Buffer, 0, 1<<20)
 	for trows.Next() {
@@ -100,8 +88,7 @@ func (t *treatments) Init(db *sql.DB) error {
 			return errors.WithContext("error reading Treatment row: ", err)
 		}
 		bbcode.ConvertString(&buf, description)
-		//tm.Description = template.HTML(buf)
-		t.treatmentOrder = append(t.treatmentOrder, tm.ID)
+		tm.Description = NewPageBytes("CARMEssential - "+tm.Name, "", template.HTML(buf))
 		t.treatments[tm.ID] = &tm
 		buf = buf[:0]
 	}
@@ -114,56 +101,20 @@ func (t *treatments) Init(db *sql.DB) error {
 		return errors.WithContext("error getting Category data: ", err)
 	}
 
-	t.categories = make(categoryMap)
+	t.categories = make(map[uint]Category)
 
 	for crows.Next() {
 		var cat Category
 		if err = crows.Scan(&cat.ID, &cat.Name, &cat.Order, &cat.AdminOnly); err != nil {
 			return errors.WithContext("error reading Category row: ", err)
 		}
-		t.categoryOrder = append(t.categoryOrder, cat.ID)
 		t.categories[cat.ID] = &cat
 	}
 	if err = crows.Close(); err != nil {
 		return errors.WithContext("error closing Category row: ", err)
 	}
 
-	t.generateHTML()
-
 	return nil
-}
-
-type treatmentOrder interface {
-	order(uint) uint
-}
-
-type treatmentSorter struct {
-	list []uint
-	treatmentOrder
-}
-
-func (t treatmentSorter) Len() int {
-	return len(t.list)
-}
-
-func (t treatmentSorter) Less(i, j int) bool {
-	return t.treatmentOrder.order(t.list[i]) < t.treatmentOrder.order(t.list[j])
-}
-
-func (t treatmentSorter) Swap(i, j int) {
-	t.list[i], t.list[j] = t.list[j], t.list[i]
-}
-
-func (t *treatments) generateHTML() {
-	sort.Sort(treatmentSorter{
-		list:           t.treatmentOrder,
-		treatmentOrder: t.treatments,
-	})
-	sort.Sort(treatmentSorter{
-		list:           t.categoryOrder,
-		treatmentOrder: t.categories,
-	})
-	// TODO: generate sidebar, page and admin
 }
 
 func (t *treatments) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -201,10 +152,50 @@ func (t *treatments) GetCategory(id uint) (Category, bool) {
 	return Category{}, false
 }
 
+func (t *treatments) GetCategoryID(name string) uint {
+	for id, cat := range t.categories {
+		if strings.EqualFold(cat.Name, name) {
+			return id
+		}
+	}
+	return 0
+}
+
+type categories []Category
+
+func (c categories) Len() int {
+	return len(c)
+}
+
+func (c categories) Less(i, j int) bool {
+	if c[i].Order < c[j].Order {
+		return true
+	}
+	return c[i].ID < c[j].ID
+}
+
 func (t *treatments) GetCategories() []Category {
-	cats := make([]Category, 0, len(t.categories))
+	cats := make(categories, 0, len(t.categories))
 	for _, o := range t.categoryOrder {
 		cats = append(cats, *t.categories[o])
 	}
-	return cats
+	sort.Sort(cats)
+	return []Category(cats)
+}
+
+func (t *treatments) SetCategory(cat *Category) {
+	if cat.ID == 0 {
+		if cat.Order == 0 {
+			cat.Order = len(t.categories) + 1
+		}
+		id, _ := t.addCategory.Exec(cat.Name, cat.Order, cat.AdminOnly).LastInsertId()
+		cat.ID = uint(id)
+		t.categories[uint(id)] = *cat
+	} else {
+		if cat.Order == 0 {
+			cat.Order = len(t.categories)
+		}
+		t.updateCategory.Exec(cat.Name, cat.Order, cat.AdminOnly, cat.ID)
+		t.categories[cat.ID] = *cat
+	}
 }
