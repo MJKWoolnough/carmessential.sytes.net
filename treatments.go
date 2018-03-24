@@ -24,7 +24,7 @@ type Treatment struct {
 	Price       uint
 	Duration    time.Duration
 	Order       uint
-	Description PageBytes
+	Description *PageBytes
 }
 
 type Category struct {
@@ -89,7 +89,7 @@ func (t *treatments) Init(db *sql.DB) error {
 		}
 		bbcode.ConvertString(&buf, description)
 		tm.Description = NewPageBytes("CARMEssential - "+tm.Name, "", template.HTML(buf))
-		t.treatments[tm.ID] = &tm
+		t.treatments[tm.ID] = tm
 		buf = buf[:0]
 	}
 	if err = trows.Close(); err != nil {
@@ -108,7 +108,7 @@ func (t *treatments) Init(db *sql.DB) error {
 		if err = crows.Scan(&cat.ID, &cat.Name, &cat.Order, &cat.AdminOnly); err != nil {
 			return errors.WithContext("error reading Category row: ", err)
 		}
-		t.categories[cat.ID] = &cat
+		t.categories[cat.ID] = cat
 	}
 	if err = crows.Close(); err != nil {
 		return errors.WithContext("error closing Category row: ", err)
@@ -147,7 +147,7 @@ func (t *treatments) UpdateDescription(id uint, desc string) {
 func (t *treatments) GetCategory(id uint) (Category, bool) {
 	c, ok := t.categories[id]
 	if ok {
-		return *c, ok
+		return c, ok
 	}
 	return Category{}, false
 }
@@ -174,10 +174,14 @@ func (c categories) Less(i, j int) bool {
 	return c[i].ID < c[j].ID
 }
 
+func (c categories) Swap(i, j int) {
+	c[i], c[j] = c[j], c[i]
+}
+
 func (t *treatments) GetCategories() []Category {
 	cats := make(categories, 0, len(t.categories))
-	for _, o := range t.categoryOrder {
-		cats = append(cats, *t.categories[o])
+	for _, cat := range t.categories {
+		cats = append(cats, cat)
 	}
 	sort.Sort(cats)
 	return []Category(cats)
@@ -186,14 +190,15 @@ func (t *treatments) GetCategories() []Category {
 func (t *treatments) SetCategory(cat *Category) {
 	if cat.ID == 0 {
 		if cat.Order == 0 {
-			cat.Order = len(t.categories) + 1
+			cat.Order = uint(len(t.categories)) + 1
 		}
-		id, _ := t.addCategory.Exec(cat.Name, cat.Order, cat.AdminOnly).LastInsertId()
+		res, _ := t.addCategory.Exec(cat.Name, cat.Order, cat.AdminOnly)
+		id, _ := res.LastInsertId()
 		cat.ID = uint(id)
 		t.categories[uint(id)] = *cat
 	} else {
 		if cat.Order == 0 {
-			cat.Order = len(t.categories)
+			cat.Order = uint(len(t.categories))
 		}
 		t.updateCategory.Exec(cat.Name, cat.Order, cat.AdminOnly, cat.ID)
 		t.categories[cat.ID] = *cat
