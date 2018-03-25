@@ -109,8 +109,7 @@ func (a *admin) categories(w http.ResponseWriter, r *http.Request) {
 			)
 			_, nameOK := r.PostForm["name"]
 			_, orderOK := r.PostForm["order"]
-			_, adminOK := r.PostForm["adminOnly"]
-			if nameOK && orderOK && adminOK {
+			if nameOK && orderOK {
 				exists = true
 				category.ID = uint(id)
 				category.Name = r.PostForm.Get("name")
@@ -144,6 +143,13 @@ func (a *admin) categories(w http.ResponseWriter, r *http.Request) {
 				)
 				return
 			}
+		}
+	} else if _, ok := r.PostForm["delete"]; ok {
+		id, err := strconv.ParseUint(r.PostForm.Get("id"), 10, 64)
+		if err == nil {
+			Treatments.RemoveCategory(uint(id))
+			http.Redirect(w, r, "/admin/categories.html", http.StatusFound)
+			return
 		}
 	}
 	Pages.Write(w, r, a.categoriesT, Treatments.GetCategories())
