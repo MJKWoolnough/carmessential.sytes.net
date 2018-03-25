@@ -127,10 +127,10 @@ func (t *treatments) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		t.ServeCategories(w, r)
 		return
 	}
-	t.RLock()
+	t.treatmu.RLock()
 	p, ok := t.treatments[uint(id)]
 	_ = p
-	t.RUnlock()
+	t.treatmu.RUnlock()
 	if !ok {
 		t.ServeCategories(w, r)
 		return
@@ -216,4 +216,11 @@ func (t *treatments) SetCategory(cat *Category) {
 		t.categories[cat.ID] = *cat
 		t.catmu.Unlock()
 	}
+}
+
+func (t *treatments) RemoveCategory(id uint) {
+	t.catmu.Lock()
+	delete(t.categories, id)
+	t.catmu.Unlock()
+	t.removeCategory.Exec(id)
 }
