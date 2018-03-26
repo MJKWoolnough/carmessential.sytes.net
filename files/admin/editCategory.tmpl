@@ -1,4 +1,4 @@
-{{define "title"}}CARM Essential - Admin - Categories{{end}}
+{{define "title"}}CARM Essential - Admin - {{if eq .ID 0}}Add{{else}}Edit{{end}} Category{{end}}
 {{define "style"}}admin{{end}}
 {{define "body"}}
 			<h2>{{if eq .ID 0}}Add{{else}}Edit{{end}} Category</h2>
