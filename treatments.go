@@ -151,10 +151,7 @@ func (t *treatments) GetCategory(id uint) (Category, bool) {
 	t.catmu.RLock()
 	c, ok := t.categories[id]
 	t.catmu.RUnlock()
-	if ok {
-		return c, ok
-	}
-	return Category{}, false
+	return c, ok
 }
 
 func (t *treatments) GetCategoryID(name string) uint {
@@ -177,8 +174,10 @@ func (c categories) Len() int {
 func (c categories) Less(i, j int) bool {
 	if c[i].Order < c[j].Order {
 		return true
+	} else if c[i].Order == c[j].Order {
+		return c[i].ID < c[j].ID
 	}
-	return c[i].ID < c[j].ID
+	return false
 }
 
 func (c categories) Swap(i, j int) {
@@ -186,8 +185,8 @@ func (c categories) Swap(i, j int) {
 }
 
 func (t *treatments) GetCategories() []Category {
-	cats := make(categories, 0, len(t.categories))
 	t.catmu.RLock()
+	cats := make(categories, 0, len(t.categories))
 	for _, cat := range t.categories {
 		cats = append(cats, cat)
 	}
@@ -197,6 +196,7 @@ func (t *treatments) GetCategories() []Category {
 }
 
 func (t *treatments) SetCategory(cat *Category) {
+	t.catmu.Lock()
 	if cat.ID == 0 {
 		if cat.Order == 0 {
 			cat.Order = uint(len(t.categories)) + 1
@@ -204,18 +204,14 @@ func (t *treatments) SetCategory(cat *Category) {
 		res, _ := t.addCategory.Exec(cat.Name, cat.Order, cat.AdminOnly)
 		id, _ := res.LastInsertId()
 		cat.ID = uint(id)
-		t.catmu.Lock()
-		t.categories[uint(id)] = *cat
-		t.catmu.Unlock()
 	} else {
 		if cat.Order == 0 {
 			cat.Order = uint(len(t.categories))
 		}
 		t.updateCategory.Exec(cat.Name, cat.Order, cat.AdminOnly, cat.ID)
-		t.catmu.Lock()
-		t.categories[cat.ID] = *cat
-		t.catmu.Unlock()
 	}
+	t.categories[cat.ID] = *cat
+	t.catmu.Unlock()
 }
 
 func (t *treatments) RemoveCategory(id uint) {
@@ -223,4 +219,78 @@ func (t *treatments) RemoveCategory(id uint) {
 	delete(t.categories, id)
 	t.catmu.Unlock()
 	t.removeCategory.Exec(id)
+}
+
+type treatmentsS []Treatment
+
+func (t treatmentsS) Len() int {
+	return len(t)
+}
+
+func (t treatmentsS) Less(i, j int) bool {
+	if t[i].Order < t[j].Order {
+		return true
+	} else if t[i].Order == t[j].Order {
+		return t[i].ID < t[j].ID
+	}
+	return false
+}
+
+func (t treatmentsS) Swap(i, j int) bool {
+	t[i], t[j] = t[j], t[i]
+}
+
+func (t *treatments) GetTreatments() []Treatment {
+	t.treatmu.RLock()
+	ts := make([]Treatment, len(t.treatments))
+	for _, treatment := range t.treatments {
+		ts = append(ts, treatment)
+	}
+	t.treatmu.RUnlock()
+	sort.Sort(ts)
+	return []Treatment(ts)
+}
+
+func (t *treatments) SetTreatment(treatment *Treatment) {
+	t.treatmu.Lock()
+	if treatment.ID == 0 {
+		if treatment.Order == 0 {
+			treatment.Order = len(t.treatments) + 1
+		}
+		res, _ := t.addTreatment.Exec(treatment.Name, treatment.Category, treatment.Price, treatment.Duration, treatment.Order)
+		id, _ = res.LastInsertId()
+		treatment.ID = uint(id)
+	} else {
+		if treatment.Order == 0 {
+			treatment.Order = len(t.treatments)
+		}
+		t.updateTreatment.Exec(treatment.ID, treatment.Name, treatment.Category, treatment.Price, treatment.Duration, treatment.Order)
+	}
+	t.treatments[treatment.ID] = *treatment
+	t.treatmu.Unlock()
+}
+
+func (t *treatments) RemoveTreatment(id uint) {
+	t.removeTreatment.Exec(id)
+	t.treatmu.Lock()
+	delete(t.treatments, id)
+	t.treatmu.Unlock()
+}
+
+func (t *treatments) GetTreatment(id uint) Treatment {
+	t.treatmu.RLock()
+	treatment, ok := t.treatments[id]
+	t.treatmu.RUnlock()
+	return treatment, ok
+}
+
+func (t *treatments) GetTreatmentID(name string) uint {
+	t.treatmu.RLock()
+	defer t.treatmu.RUnlock()
+	for id, treatment := range t.treatments {
+		if strings.EqualFold(treatment.Name, name) {
+			return id
+		}
+	}
+	return 0
 }
