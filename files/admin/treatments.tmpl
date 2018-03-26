@@ -1,0 +1,16 @@
+{{define "title"}}CARM Essential - Admin - Treatments{{end}}
+{{define "style"}}admin{{end}}
+{{define "body"}}
+			<h2>Treatments</h2>
+			<form action="?" method="post">
+				<input type="submit" name="set" value="+" />
+			</form>{{if .}}
+			<br />
+			<form action="?" method="post">
+				<select name="id">
+{{range $treatment := .}}				<option value="{{$treatment.ID}}">{{$treatment.Name}}</option>
+{{end}}				</select>
+				<input type="submit" name="set" value="Edit" />
+				<input type="submit" name="delete" value="&#10062;" onclick="return confirm('Are you sure you wish to delete this treatment?')" />
+			</form>
+{{end}}
