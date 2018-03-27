@@ -236,13 +236,13 @@ func (t treatmentsS) Less(i, j int) bool {
 	return false
 }
 
-func (t treatmentsS) Swap(i, j int) bool {
+func (t treatmentsS) Swap(i, j int) {
 	t[i], t[j] = t[j], t[i]
 }
 
 func (t *treatments) GetTreatments() []Treatment {
 	t.treatmu.RLock()
-	ts := make([]Treatment, len(t.treatments))
+	ts := make(treatmentsS, len(t.treatments))
 	for _, treatment := range t.treatments {
 		ts = append(ts, treatment)
 	}
@@ -255,14 +255,14 @@ func (t *treatments) SetTreatment(treatment *Treatment) {
 	t.treatmu.Lock()
 	if treatment.ID == 0 {
 		if treatment.Order == 0 {
-			treatment.Order = len(t.treatments) + 1
+			treatment.Order = uint(len(t.treatments) + 1)
 		}
 		res, _ := t.addTreatment.Exec(treatment.Name, treatment.Category, treatment.Price, treatment.Duration, treatment.Order)
-		id, _ = res.LastInsertId()
+		id, _ := res.LastInsertId()
 		treatment.ID = uint(id)
 	} else {
 		if treatment.Order == 0 {
-			treatment.Order = len(t.treatments)
+			treatment.Order = uint(len(t.treatments))
 		}
 		t.updateTreatment.Exec(treatment.ID, treatment.Name, treatment.Category, treatment.Price, treatment.Duration, treatment.Order)
 	}
@@ -277,7 +277,7 @@ func (t *treatments) RemoveTreatment(id uint) {
 	t.treatmu.Unlock()
 }
 
-func (t *treatments) GetTreatment(id uint) Treatment {
+func (t *treatments) GetTreatment(id uint) (Treatment, bool) {
 	t.treatmu.RLock()
 	treatment, ok := t.treatments[id]
 	t.treatmu.RUnlock()

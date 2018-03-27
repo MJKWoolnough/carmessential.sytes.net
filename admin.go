@@ -13,7 +13,7 @@ import (
 var Admin admin
 
 type admin struct {
-	indexT, configT, categoriesT, editCategoryT, treatmentsT, templatesT string
+	indexT, configT, categoriesT, editCategoryT, treatmentsT, editTreatmentT, templatesT string
 }
 
 func (a *admin) Init() error {
@@ -26,6 +26,7 @@ func (a *admin) Init() error {
 		{&a.categoriesT, filepath.Join("admin", "categories.tmpl")},
 		{&a.editCategoryT, filepath.Join("admin", "editCategory.tmpl")},
 		{&a.treatmentsT, filepath.Join("admin", "treatments.tmpl")},
+		{&a.editTreatmentT, filepath.Join("admin", "editTreatment.tmpl")},
 		{&a.templatesT, filepath.Join("admin", "templates.tmpl")},
 	} {
 		*tmpl.template = tmpl.path
@@ -156,7 +157,75 @@ func (a *admin) categories(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *admin) treatments(w http.ResponseWriter, r *http.Request) {
-
+	r.ParseForm()
+	if _, ok := r.PostForm["set"]; ok {
+		idStr := r.PostForm.Get("id")
+		var (
+			id  uint64
+			err error
+		)
+		if idStr != "" {
+			id, err = strconv.ParseUint(idStr, 10, 64)
+		}
+		if err == nil {
+			var (
+				nameError, orderError, categoryError, priceError, timeError, descriptionError string
+				treatment                                                                     Treatment
+				exists                                                                        bool
+			)
+			_, nameOK := r.PostForm["name"]
+			_, orderOK := r.PostForm["order"]
+			_, categoryOK := r.PostForm["catID"]
+			_, priceOK := r.PostForm["price"]
+			_, timeOK := r.PostForm["time"]
+			_, descriptionOK := r.PostForm["description"]
+			if nameOK && orderOK && categoryOK && priceOK && timeOK && descriptionOK {
+				exists = true
+				treatment.ID = uint(id)
+				treatment.Name = r.PostForm.Get("name")
+				if Treatments.GetTreatmentID(treatment.Name) != treatment.ID {
+					nameError = "treatment already exists"
+				}
+				order, err := strconv.ParseUint(r.PostForm.Get("order"), 10, 64)
+				if err != nil {
+					orderError = err.Error()
+				}
+				treatment.Order = uint(order)
+				if nameError == "" && orderError == "" && categoryError == "" && priceError == "" && timeError == "" && descriptionError == "" {
+					Treatments.SetTreatment(&treatment)
+					http.Redirect(w, r, "/admin/treatments.html", http.StatusFound)
+					return
+				}
+			} else {
+				treatment, exists = Treatments.GetTreatment(uint(id))
+			}
+			if exists || id == 0 {
+				Pages.Write(w, r, a.editTreatmentT,
+					struct {
+						Treatment
+						NameError, OrderError, CategoryError, PriceError, TimeError, DescriptionError string
+					}{
+						Treatment:        treatment,
+						NameError:        nameError,
+						OrderError:       orderError,
+						CategoryError:    categoryError,
+						PriceError:       priceError,
+						TimeError:        timeError,
+						DescriptionError: descriptionError,
+					},
+				)
+				return
+			}
+		}
+	} else if _, ok := r.PostForm["delete"]; ok {
+		id, err := strconv.ParseUint(r.PostForm.Get("id"), 10, 64)
+		if err == nil {
+			Treatments.RemoveTreatment(uint(id))
+			http.Redirect(w, r, "/admin/treatments.html", http.StatusFound)
+			return
+		}
+	}
+	Pages.Write(w, r, a.treatmentsT, Treatments.GetTreatments())
 }
 
 func (a *admin) templates(w http.ResponseWriter, r *http.Request) {
