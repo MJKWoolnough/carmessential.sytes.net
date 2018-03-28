@@ -12,7 +12,7 @@
 {{end}}				</select>{{if ne .CategoryError ""}}<div class="error">{{.CategoryError}}</div>{{end}}<br />
 				<label for="price">Price</label><input type="number" id="price" name="price" min="0" step="0.01" value="{{.Price}}" />{{if ne .PriceError ""}}<div class="error">{{.PriceError}}</div>{{end}}<br />
 				<label for="time">Duration (mins)</label><input type="number" id="time" name="time" min="15" step="15" value="{{.Duration}}" />{{if ne .TimeError ""}}<div class="error">{{.TimeError}}</div>{{end}}<br />
-				<label for="description">Description</label><textarea id="description" name="description">{{with .Description}}{{.}}{{end}}</textarea>{{if ne .DescriptionError ""}}<div class="error">{{.DescriptionError}}</div>{{end}}<br />
+				<label for="description">Description</label><textarea id="description" name="description">{{.DescriptionSrc}}</textarea>{{if ne .DescriptionError ""}}<div class="error">{{.DescriptionError}}</div>{{end}}<br />
 				<input type="submit" name="set" value="{{if eq .ID 0}}Add{{else}}Edit{{end}}" />
 			</form>
 {{end}}
