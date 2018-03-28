@@ -39,10 +39,8 @@ type treatments struct {
 	addTreatment, updateTreatment, removeTreatment *sql.Stmt
 	addCategory, updateCategory, removeCategory    *sql.Stmt
 
-	treatmu    sync.RWMutex
+	mu         sync.RWMutex
 	treatments map[uint]Treatment
-
-	catmu      sync.RWMutex
 	categories map[uint]Category
 
 	sidebar, page, admin template.HTML
@@ -82,7 +80,6 @@ func (t *treatments) Init(db *sql.DB) error {
 
 	t.treatments = make(map[uint]Treatment)
 
-	buf := make(memio.Buffer, 0, 1<<20)
 	for trows.Next() {
 		var (
 			tm Treatment
@@ -90,8 +87,7 @@ func (t *treatments) Init(db *sql.DB) error {
 		if err = trows.Scan(&tm.ID, &tm.Name, &tm.Category, &tm.Price, &tm.Duration, &tm.DescriptionSrc, &tm.Order); err != nil {
 			return errors.WithContext("error reading Treatment row: ", err)
 		}
-		bbcode.ConvertString(&buf, description)
-		tm.Description = NewPageBytes("CARMEssential - "+tm.Name, "", template.HTML(buf))
+		buildTreatmentPage(&tm)
 		t.treatments[tm.ID] = tm
 		buf = buf[:0]
 	}
@@ -116,6 +112,7 @@ func (t *treatments) Init(db *sql.DB) error {
 	if err = crows.Close(); err != nil {
 		return errors.WithContext("error closing Category row: ", err)
 	}
+	t.rebuild()
 
 	return nil
 }
@@ -127,10 +124,10 @@ func (t *treatments) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		t.ServeCategories(w, r)
 		return
 	}
-	t.treatmu.RLock()
+	t.mu.RLock()
 	p, ok := t.treatments[uint(id)]
 	_ = p
-	t.treatmu.RUnlock()
+	t.mu.RUnlock()
 	if !ok {
 		t.ServeCategories(w, r)
 		return
@@ -148,15 +145,15 @@ func (t *treatments) UpdateDescription(id uint, desc string) {
 }
 
 func (t *treatments) GetCategory(id uint) (Category, bool) {
-	t.catmu.RLock()
+	t.mu.RLock()
 	c, ok := t.categories[id]
-	t.catmu.RUnlock()
+	t.mu.RUnlock()
 	return c, ok
 }
 
 func (t *treatments) GetCategoryID(name string) uint {
-	t.catmu.RLock()
-	defer t.catmu.RUnlock()
+	t.mu.RLock()
+	defer t.mu.RUnlock()
 	for id, cat := range t.categories {
 		if strings.EqualFold(cat.Name, name) {
 			return id
@@ -185,18 +182,18 @@ func (c categories) Swap(i, j int) {
 }
 
 func (t *treatments) GetCategories() []Category {
-	t.catmu.RLock()
+	t.mu.RLock()
 	cats := make(categories, 0, len(t.categories))
 	for _, cat := range t.categories {
 		cats = append(cats, cat)
 	}
-	t.catmu.RUnlock()
+	t.mu.RUnlock()
 	sort.Sort(cats)
 	return []Category(cats)
 }
 
 func (t *treatments) SetCategory(cat *Category) {
-	t.catmu.Lock()
+	t.mu.Lock()
 	if cat.ID == 0 {
 		if cat.Order == 0 {
 			cat.Order = uint(len(t.categories)) + 1
@@ -211,13 +208,15 @@ func (t *treatments) SetCategory(cat *Category) {
 		t.updateCategory.Exec(cat.Name, cat.Order, cat.AdminOnly, cat.ID)
 	}
 	t.categories[cat.ID] = *cat
-	t.catmu.Unlock()
+	t.rebuildCategories()
+	t.mu.Unlock()
 }
 
 func (t *treatments) RemoveCategory(id uint) {
-	t.catmu.Lock()
+	t.mu.Lock()
 	delete(t.categories, id)
-	t.catmu.Unlock()
+	t.rebuildCategories()
+	t.mu.Unlock()
 	t.removeCategory.Exec(id)
 }
 
@@ -241,18 +240,18 @@ func (t treatmentsS) Swap(i, j int) {
 }
 
 func (t *treatments) GetTreatments() []Treatment {
-	t.treatmu.RLock()
+	t.mu.RLock()
 	ts := make(treatmentsS, len(t.treatments))
 	for _, treatment := range t.treatments {
 		ts = append(ts, treatment)
 	}
-	t.treatmu.RUnlock()
+	t.mu.RUnlock()
 	sort.Sort(ts)
 	return []Treatment(ts)
 }
 
 func (t *treatments) SetTreatment(treatment *Treatment) {
-	t.treatmu.Lock()
+	t.mu.Lock()
 	if treatment.ID == 0 {
 		if treatment.Order == 0 {
 			treatment.Order = uint(len(t.treatments) + 1)
@@ -264,33 +263,48 @@ func (t *treatments) SetTreatment(treatment *Treatment) {
 		if treatment.Order == 0 {
 			treatment.Order = uint(len(t.treatments))
 		}
-		t.updateTreatment.Exec(treatment.ID, treatment.Name, treatment.Category, treatment.Price, treatment.Duration, treatment.Order)
+		t.updateTreatment.Exec(treatment.ID, treatment.Name, treatment.Category, treatment.Price, treatment.Duration, treatment.DescriptionSrc, treatment.Order)
 	}
+	buildTreatmentPage(treatment)
 	t.treatments[treatment.ID] = *treatment
-	t.treatmu.Unlock()
+	t.rebuildCategories()
+	t.mu.Unlock()
 }
 
 func (t *treatments) RemoveTreatment(id uint) {
 	t.removeTreatment.Exec(id)
-	t.treatmu.Lock()
+	t.mu.Lock()
 	delete(t.treatments, id)
-	t.treatmu.Unlock()
+	t.rebuildCategories()
+	t.mu.Unlock()
 }
 
 func (t *treatments) GetTreatment(id uint) (Treatment, bool) {
-	t.treatmu.RLock()
+	t.mu.RLock()
 	treatment, ok := t.treatments[id]
-	t.treatmu.RUnlock()
+	t.mu.RUnlock()
 	return treatment, ok
 }
 
 func (t *treatments) GetTreatmentID(name string) uint {
-	t.treatmu.RLock()
-	defer t.treatmu.RUnlock()
+	t.mu.RLock()
+	defer t.mu.RUnlock()
 	for id, treatment := range t.treatments {
 		if strings.EqualFold(treatment.Name, name) {
 			return id
 		}
 	}
 	return 0
+}
+
+var buf = make(memio.Buffer, 0, 1<<20)
+
+func buildTreatmentPage(treatment *Treatment) {
+	myBuf := buf
+	bbcode.ConvertString(&myBuf, treatment.DescriptionSrc)
+	treatment.Description = NewPageBytes("CARMEssential - "+treatment.Name, "", template.HTML(buf))
+}
+
+func (t *treatments) buildCategories() {
+
 }
