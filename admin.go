@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/MJKWoolnough/errors"
 )
@@ -203,9 +204,13 @@ func (a *admin) treatments(w http.ResponseWriter, r *http.Request) {
 				Pages.Write(w, r, a.editTreatmentT,
 					struct {
 						Treatment
+						Categories                                                                    []Category
+						Duration                                                                      uint
 						NameError, OrderError, CategoryError, PriceError, TimeError, DescriptionError string
 					}{
 						Treatment:        treatment,
+						Categories:       Treatments.GetCategories(),
+						Duration:         uint(Treatment.Duration / time.Minute),
 						NameError:        nameError,
 						OrderError:       orderError,
 						CategoryError:    categoryError,
