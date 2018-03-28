@@ -210,7 +210,7 @@ func (a *admin) treatments(w http.ResponseWriter, r *http.Request) {
 					}{
 						Treatment:        treatment,
 						Categories:       Treatments.GetCategories(),
-						Duration:         uint(Treatment.Duration / time.Minute),
+						Duration:         uint(treatment.Duration / time.Minute),
 						NameError:        nameError,
 						OrderError:       orderError,
 						CategoryError:    categoryError,
