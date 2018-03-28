@@ -18,13 +18,14 @@ import (
 var Treatments treatments
 
 type Treatment struct {
-	ID          uint
-	Name        string
-	Category    uint
-	Price       uint
-	Duration    time.Duration
-	Order       uint
-	Description *PageBytes
+	ID             uint
+	Name           string
+	Category       uint
+	Price          uint
+	Duration       time.Duration
+	Order          uint
+	DescriptionSrc string
+	Description    *PageBytes
 }
 
 type Category struct {
@@ -84,10 +85,9 @@ func (t *treatments) Init(db *sql.DB) error {
 	buf := make(memio.Buffer, 0, 1<<20)
 	for trows.Next() {
 		var (
-			tm          Treatment
-			description string
+			tm Treatment
 		)
-		if err = trows.Scan(&tm.ID, &tm.Name, &tm.Category, &tm.Price, &tm.Duration, &description, &tm.Order); err != nil {
+		if err = trows.Scan(&tm.ID, &tm.Name, &tm.Category, &tm.Price, &tm.Duration, &tm.DescriptionSrc, &tm.Order); err != nil {
 			return errors.WithContext("error reading Treatment row: ", err)
 		}
 		bbcode.ConvertString(&buf, description)
@@ -257,7 +257,7 @@ func (t *treatments) SetTreatment(treatment *Treatment) {
 		if treatment.Order == 0 {
 			treatment.Order = uint(len(t.treatments) + 1)
 		}
-		res, _ := t.addTreatment.Exec(treatment.Name, treatment.Category, treatment.Price, treatment.Duration, treatment.Order)
+		res, _ := t.addTreatment.Exec(treatment.Name, treatment.Category, treatment.Price, treatment.Duration, treatment.DescriptionSrc, treatment.Order)
 		id, _ := res.LastInsertId()
 		treatment.ID = uint(id)
 	} else {
