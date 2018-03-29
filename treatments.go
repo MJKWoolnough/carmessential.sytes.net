@@ -112,7 +112,7 @@ func (t *treatments) Init(db *sql.DB) error {
 	if err = crows.Close(); err != nil {
 		return errors.WithContext("error closing Category row: ", err)
 	}
-	t.rebuild()
+	t.buildCategories()
 
 	return nil
 }
@@ -208,14 +208,14 @@ func (t *treatments) SetCategory(cat *Category) {
 		t.updateCategory.Exec(cat.Name, cat.Order, cat.AdminOnly, cat.ID)
 	}
 	t.categories[cat.ID] = *cat
-	t.rebuildCategories()
+	t.buildCategories()
 	t.mu.Unlock()
 }
 
 func (t *treatments) RemoveCategory(id uint) {
 	t.mu.Lock()
 	delete(t.categories, id)
-	t.rebuildCategories()
+	t.buildCategories()
 	t.mu.Unlock()
 	t.removeCategory.Exec(id)
 }
@@ -267,7 +267,7 @@ func (t *treatments) SetTreatment(treatment *Treatment) {
 	}
 	buildTreatmentPage(treatment)
 	t.treatments[treatment.ID] = *treatment
-	t.rebuildCategories()
+	t.buildCategories()
 	t.mu.Unlock()
 }
 
@@ -275,7 +275,7 @@ func (t *treatments) RemoveTreatment(id uint) {
 	t.removeTreatment.Exec(id)
 	t.mu.Lock()
 	delete(t.treatments, id)
-	t.rebuildCategories()
+	t.buildCategories()
 	t.mu.Unlock()
 }
 
