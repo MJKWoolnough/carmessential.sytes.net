@@ -192,6 +192,30 @@ func (a *admin) treatments(w http.ResponseWriter, r *http.Request) {
 					orderError = err.Error()
 				}
 				treatment.Order = uint(order)
+				category, err := strconv.ParseUint(r.PostForm.Get("catID"), 10, 64)
+				if err != nil {
+					categoryError = err.Error()
+				} else if _, ok := Treatments.GetCategory(treatment.Category); !ok {
+					categoryError = "unknown category"
+				} else {
+					treatment.Category = uint(category)
+				}
+				if price, err := strconv.ParseFloat(r.PostForm.Get("price"), 32); err != nil {
+					priceError = err.Error()
+				} else {
+					treatment.Price = uint(price * 100)
+				}
+				if duration, err := strconv.ParseUint(r.PostForm.Get("time"), 10, 64); err != nil {
+					timeError = err.Error()
+				} else if duration%15 != 0 {
+					timeError = "duration needs to be a multiple of 15 minutes"
+				} else {
+					treatment.Duration = time.Duration(duration) * time.Minute
+				}
+				treatment.DescriptionSrc = r.PostForm.Get("description")
+				if treatment.DescriptionSrc == "" {
+					descriptionError = "need a description"
+				}
 				if nameError == "" && orderError == "" && categoryError == "" && priceError == "" && timeError == "" && descriptionError == "" {
 					Treatments.SetTreatment(&treatment)
 					http.Redirect(w, r, "/admin/treatments.html", http.StatusFound)
@@ -206,11 +230,13 @@ func (a *admin) treatments(w http.ResponseWriter, r *http.Request) {
 						Treatment
 						Categories                                                                    []Category
 						Duration                                                                      uint
+						Price                                                                         float32
 						NameError, OrderError, CategoryError, PriceError, TimeError, DescriptionError string
 					}{
 						Treatment:        treatment,
 						Categories:       Treatments.GetCategories(),
 						Duration:         uint(treatment.Duration / time.Minute),
+						Price:            float32(treatment.Price) / 100,
 						NameError:        nameError,
 						OrderError:       orderError,
 						CategoryError:    categoryError,
