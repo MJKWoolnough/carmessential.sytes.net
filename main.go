@@ -57,8 +57,8 @@ func main() {
 	// load items from database
 	// load schedule from database
 	wrapped := http.NewServeMux()
+	wrapped.Handle("/treatments/", Treatments)
 	/*
-		wrapped.Handle("/treatments/", Treatments)
 		wrapped.Handle("/vouchers/", Vouchers)
 		wrapped.Handle("/contact.html", contact)
 		wrapped.Handle("/pricelist.html", Treatments.PriceList)

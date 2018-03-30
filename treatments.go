@@ -39,11 +39,10 @@ type treatments struct {
 	addTreatment, updateTreatment, removeTreatment *sql.Stmt
 	addCategory, updateCategory, removeCategory    *sql.Stmt
 
-	mu         sync.RWMutex
-	treatments map[uint]Treatment
-	categories map[uint]Category
-
-	sidebar, page, admin template.HTML
+	mu           sync.RWMutex
+	treatments   map[uint]Treatment
+	categories   map[uint]Category
+	categoryPage *PageBytes
 }
 
 func (t *treatments) Init(db *sql.DB) error {
@@ -129,14 +128,10 @@ func (t *treatments) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	_ = p
 	t.mu.RUnlock()
 	if !ok {
-		t.ServeCategories(w, r)
+		t.categoryPage.ServeHTTP(w, r)
 		return
 	}
-
-}
-
-func (t *treatments) ServeCategories(w http.ResponseWriter, r *http.Request) {
-
+	p.Description.ServeHTTP(w, r)
 }
 
 func (t *treatments) UpdateDescription(id uint, desc string) {
@@ -306,5 +301,5 @@ func buildTreatmentPage(treatment *Treatment) {
 }
 
 func (t *treatments) buildCategories() {
-
+	t.categoryPage = NewPageBytes("CARMEssential - Treatments", "", template.HTML(""))
 }
