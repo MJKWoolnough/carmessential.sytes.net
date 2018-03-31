@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -42,6 +43,7 @@ type treatments struct {
 	mu           sync.RWMutex
 	treatments   map[uint]Treatment
 	categories   map[uint]Category
+	categoryT    *template.Template
 	categoryPage *PageBytes
 }
 
@@ -111,6 +113,19 @@ func (t *treatments) Init(db *sql.DB) error {
 	if err = crows.Close(); err != nil {
 		return errors.WithContext("error closing Category row: ", err)
 	}
+	t.categoryT = template.New("")
+	t.categoryT.Funcs(
+		template.FuncMap{
+			"price": func(amount uint) string {
+				return strconv.FormatFloat(float64(amount)/100, 'f', 2, 32)
+			},
+		},
+	)
+	_, err = t.categoryT.ParseFiles(filepath.Join(*filesDir, "categories.tmpl"))
+	if err != nil {
+		return errors.WithContext("error parsing categories template: ", err)
+	}
+	t.categoryT = t.categoryT.Lookup("categories.tmpl")
 	t.buildCategories()
 
 	return nil
@@ -120,7 +135,7 @@ func (t *treatments) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	id, err := strconv.ParseUint(r.FormValue("id"), 10, 0)
 	if err != nil {
-		t.ServeCategories(w, r)
+		t.categoryPage.ServeHTTP(w, r)
 		return
 	}
 	t.mu.RLock()
@@ -245,6 +260,19 @@ func (t *treatments) GetTreatments() []Treatment {
 	return []Treatment(ts)
 }
 
+func (t *treatments) GetTreatmentsForCategory(catID uint) []Treatment {
+	t.mu.RLock()
+	ts := make(treatmentsS, len(t.treatments))
+	for _, treatment := range t.treatments {
+		if treatment.Category == catID {
+			ts = append(ts, treatment)
+		}
+	}
+	t.mu.RUnlock()
+	sort.Sort(ts)
+	return []Treatment(ts)
+}
+
 func (t *treatments) SetTreatment(treatment *Treatment) {
 	t.mu.Lock()
 	if treatment.ID == 0 {
@@ -301,5 +329,7 @@ func buildTreatmentPage(treatment *Treatment) {
 }
 
 func (t *treatments) buildCategories() {
-	t.categoryPage = NewPageBytes("CARMEssential - Treatments", "", template.HTML(""))
+	myBuf := buf
+	t.categoryT.Execute(&myBuf, t)
+	t.categoryPage = NewPageBytes("CARMEssential - Treatments", "treatments", template.HTML(myBuf))
 }
