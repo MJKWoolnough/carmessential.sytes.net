@@ -140,7 +140,6 @@ func (t *treatments) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	t.mu.RLock()
 	p, ok := t.treatments[uint(id)]
-	_ = p
 	t.mu.RUnlock()
 	if !ok {
 		t.categoryPage.ServeHTTP(w, r)
@@ -325,7 +324,7 @@ var buf = make(memio.Buffer, 0, 1<<20)
 func buildTreatmentPage(treatment *Treatment) {
 	myBuf := buf
 	bbcode.ConvertString(&myBuf, treatment.DescriptionSrc)
-	treatment.Description = NewPageBytes("CARMEssential - "+treatment.Name, "", template.HTML(buf))
+	treatment.Description = NewPageBytes("CARMEssential - "+treatment.Name, "default", template.HTML(myBuf))
 }
 
 func (t *treatments) buildCategories() {
