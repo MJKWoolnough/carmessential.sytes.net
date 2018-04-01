@@ -195,7 +195,7 @@ func (a *admin) treatments(w http.ResponseWriter, r *http.Request) {
 				category, err := strconv.ParseUint(r.PostForm.Get("catID"), 10, 64)
 				if err != nil {
 					categoryError = err.Error()
-				} else if _, ok := Treatments.GetCategory(treatment.Category); !ok {
+				} else if _, ok := Treatments.GetCategory(uint(category)); !ok {
 					categoryError = "unknown category"
 				} else {
 					treatment.Category = uint(category)
