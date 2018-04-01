@@ -3,7 +3,7 @@
 			<h3>{{$category.Name}}</h3>
 			<ul class="productView">
 {{range $treatment := .Treatments}}				<li>
-					<a href="?{{$treatment.ID}}">{{$treatment.Name}}</a>
+					<a href="?id={{$treatment.ID}}">{{$treatment.Name}}</a>
 					<span>&#163;{{price $treatment.Price}}</span>
 					<form action="book.html">
 						<input type="hidden" name="id" value="{{$treatment.ID}}">
