@@ -251,7 +251,7 @@ func (t treatmentsS) Swap(i, j int) {
 
 func (t *treatments) GetTreatments() []Treatment {
 	t.mu.RLock()
-	ts := make(treatmentsS, len(t.treatments))
+	ts := make(treatmentsS, 0, len(t.treatments))
 	for _, treatment := range t.treatments {
 		ts = append(ts, treatment)
 	}
@@ -330,6 +330,29 @@ func buildTreatmentPage(treatment *Treatment) {
 
 func (t *treatments) buildCategories() {
 	myBuf := buf
-	t.categoryT.Execute(&myBuf, t)
+	cats := make(categories, 0, len(t.categories))
+	for _, cat := range t.categories {
+		cats = append(cats, cat)
+	}
+	sort.Sort(cats)
+	type catTreats struct {
+		Category
+		Treatments []Treatment
+	}
+	data := make([]catTreats, len(cats))
+	for n, cat := range cats {
+		var treats treatmentsS
+		for _, treatment := range t.treatments {
+			if treatment.Category == cat.ID {
+				treats = append(treats, treatment)
+			}
+		}
+		sort.Sort(treats)
+		data[n] = catTreats{
+			cat,
+			treats,
+		}
+	}
+	t.categoryT.Execute(&myBuf, data)
 	t.categoryPage = NewPageBytes("CARMEssential - Treatments", "treatments", template.HTML(myBuf))
 }
