@@ -74,7 +74,7 @@ func (t *treatments) Init(db *sql.DB) error {
 		}
 	}
 
-	trows, err := db.Query("SELECT [ID], [Name], [Category], [Price], [Duration], [Order] FROM [Treatment];")
+	trows, err := db.Query("SELECT [ID], [Name], [Category], [Price], [Duration], [Description], [Order] FROM [Treatment];")
 	if err != nil {
 		return errors.WithContext("error getting Treatment data: ", err)
 	}
