@@ -1,8 +1,8 @@
 			<h1>Treatments</h1>
-{{range $category := $.GetCategories}}
+{{range $category := .}}
 			<h3>{{$category.Name}}</h3>
 			<ul class="productView">
-{{range $treatment := $.GetTreatmentsForCategory $category.ID}}				<li>
+{{range $treatment := .Treatments}}				<li>
 					<a href="?{{$treatment.ID}}">{{$treatment.Name}}</a>
 					<span>&#163;{{price $treatment.Price}}</span>
 					<form action="book.html">
