@@ -70,7 +70,9 @@ func (u *users) UserID(emailAddress string) (int64, error) {
 
 func (u *users) UserHash(id int64) ([]byte, error) {
 	passHash := make([]byte, saltLength, saltLength+sha256.Size)
+	DB.Lock()
 	err := u.userHash.QueryRow(id).Scan(&passHash)
+	DB.Unlock()
 	return passHash, err
 }
 

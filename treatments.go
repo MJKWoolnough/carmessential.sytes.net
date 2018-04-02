@@ -207,14 +207,18 @@ func (t *treatments) SetCategory(cat *Category) {
 		if cat.Order == 0 {
 			cat.Order = uint(len(t.categories)) + 1
 		}
+		DB.Lock()
 		res, _ := t.addCategory.Exec(cat.Name, cat.Order, cat.AdminOnly)
 		id, _ := res.LastInsertId()
+		DB.Unlock()
 		cat.ID = uint(id)
 	} else {
 		if cat.Order == 0 {
 			cat.Order = uint(len(t.categories))
 		}
+		DB.Lock()
 		t.updateCategory.Exec(cat.Name, cat.Order, cat.AdminOnly, cat.ID)
+		DB.Unlock()
 	}
 	t.categories[cat.ID] = *cat
 	t.buildCategories()
@@ -222,11 +226,13 @@ func (t *treatments) SetCategory(cat *Category) {
 }
 
 func (t *treatments) RemoveCategory(id uint) {
+	DB.Lock()
+	t.removeCategory.Exec(id)
+	DB.Unlock()
 	t.mu.Lock()
 	delete(t.categories, id)
 	t.buildCategories()
 	t.mu.Unlock()
-	t.removeCategory.Exec(id)
 }
 
 type treatmentsS []Treatment
@@ -278,14 +284,18 @@ func (t *treatments) SetTreatment(treatment *Treatment) {
 		if treatment.Order == 0 {
 			treatment.Order = uint(len(t.treatments) + 1)
 		}
+		DB.Lock()
 		res, _ := t.addTreatment.Exec(treatment.Name, treatment.Category, treatment.Price, treatment.Duration, treatment.DescriptionSrc, treatment.Order)
 		id, _ := res.LastInsertId()
+		DB.Unlock()
 		treatment.ID = uint(id)
 	} else {
 		if treatment.Order == 0 {
 			treatment.Order = uint(len(t.treatments))
 		}
+		DB.Lock()
 		t.updateTreatment.Exec(treatment.ID, treatment.Name, treatment.Category, treatment.Price, treatment.Duration, treatment.DescriptionSrc, treatment.Order)
+		DB.Unlock()
 	}
 	buildTreatmentPage(treatment)
 	t.treatments[treatment.ID] = *treatment
@@ -294,7 +304,9 @@ func (t *treatments) SetTreatment(treatment *Treatment) {
 }
 
 func (t *treatments) RemoveTreatment(id uint) {
+	DB.Lock()
 	t.removeTreatment.Exec(id)
+	DB.Unlock()
 	t.mu.Lock()
 	delete(t.treatments, id)
 	t.buildCategories()
