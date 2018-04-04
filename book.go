@@ -27,7 +27,7 @@ func (b bookingList) Len() int {
 }
 
 func (b bookingList) Less(i, j int) bool {
-	return !b[j].Time.After(b[i])
+	return !b[j].Time.After(b[i].Time)
 }
 
 func (b bookingList) Swap(i, j int) {
@@ -35,9 +35,13 @@ func (b bookingList) Swap(i, j int) {
 }
 
 func (b *bookings) Init(db *sql.DB) error {
-	_, err = db.Exec("CREATE TABLE IF NOT EXISTS [Booking]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [ID] INTEGER NOT NULL, [Treatment] INTEGER NOT NULL, [User] INTEGER NOT NULL DEFAULT 0, [Name] STRING NOT NULL);")
+	_, err := db.Exec("CREATE TABLE IF NOT EXISTS [Booking]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [ID] INTEGER NOT NULL, [Treatment] INTEGER NOT NULL, [User] INTEGER NOT NULL DEFAULT 0, [Name] STRING NOT NULL);")
 	if err != nil {
 		return errors.WithContext("error creating Booking table: ", err)
+	}
+
+	if err = Pages.RegisterTemplate("booking.tmpl"); err != nil {
+		return errors.WithContext("error registering booking template: ", err)
 	}
 	return nil
 }
