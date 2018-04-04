@@ -1,0 +1,26 @@
+{{define "title"}}CARM Essential - Book a Treatment - {{.Name}}{{end}}
+{{define "style"}}book{{end}}
+{{define "body"}}
+			<div>Treatment: {{.Name}}<br />Time: {{.Time}}</div>
+			<form action="?" method="post">
+				<input type="hidden" name="treatmentID" value="{{.TreatmentID}}" />{{if gt .Page 3}}
+				<div class="prevNext">
+					<button type="submit" name="page" value="{{sub .Page 4}}" class="PrevMonth">Previous Month</button>{{end}}{{if gt .Page 0}}
+					<button type="submit" name="page" value="{{sub .Page 1}}" class="PrevWeek">Previous Week</button>{{end}}{{if lt .Page 51}}
+					<button type="submit" name="page" value="{{add .Page 1}}" class="NextWeek">Next Week</button>{{end}}{{if lt .Page 48}}
+					<button type="submit" name="page" value="{{add .Page 4}}" class="NextMonth">Next Month</button>{{end}}
+				</div>
+				<table>
+					<thead>
+					</thead>
+					<tbody>
+					</tbody>
+				</table>
+				<div class="prevNext">><!-- Position Sticky -->
+					<button type="submit" name="page" value="{{sub .Page 4}}" class="PrevMonth">Previous Month</button>{{end}}{{if gt .Page 0}}
+					<button type="submit" name="page" value="{{sub .Page 1}}" class="PrevWeek">Previous Week</button>{{end}}{{if lt .Page 51}}
+					<button type="submit" name="page" value="{{add .Page 1}}" class="NextWeek">Next Week</button>{{end}}{{if lt .Page 48}}
+					<button type="submit" name="page" value="{{add .Page 4}}" class="NextMonth">Next Month</button>{{end}}
+				</div>
+			</form>
+{{end}}
