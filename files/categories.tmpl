@@ -5,11 +5,11 @@
 {{range $treatment := .Treatments}}				<li>
 					<a href="?id={{$treatment.ID}}">{{$treatment.Name}}</a>
 					<span>&#163;{{price $treatment.Price}}</span>
-					<form action="book.html">
+					<form action="book.html" method="post">
 						<input type="hidden" name="id" value="{{$treatment.ID}}">
 						<input type="submit" value="Book Treatment" />
 					</form>
-					<form action="basket.html">
+					<form action="basket.html" method="post">
 						<input type="hidden" name="id" value="{{$treatment.ID}}">
 						<input type="submit" value="Buy Voucher" />
 					</form>
