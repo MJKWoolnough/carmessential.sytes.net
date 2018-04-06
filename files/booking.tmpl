@@ -12,9 +12,26 @@
 				</div>
 				<table>
 					<thead>
+						<tr>
+							<th></th>{{range $time := $.Times}}
+							<th>{{$time.String}}</th>{{end}}
+						</tr>
 					</thead>
-					<tbody>
+					<tbody>{{range $row := .Bookings}}
+						<tr>
+							<td>{{$row.Date}}</td>{{range $time := $.Times}}
+							<td>{{if $row.Empty $time}}
+								<button type="submit" name="time" value="{{$time}}">Book</button>
+							{{end}}</td>
+						</tr>
+
 					</tbody>
+					<tfoot>
+						<tr>
+							<th></th>{{range $time := $.Times}}
+							<th>{{$time.String}}</th>{{end}}
+						</tr>
+					</tfoot>
 				</table>
 				<div class="prevNext">><!-- Position Sticky -->
 					<button type="submit" name="page" value="{{sub .Page 4}}" class="PrevMonth">Previous Month</button>{{end}}{{if gt .Page 0}}
