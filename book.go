@@ -11,7 +11,7 @@ import (
 var Bookings bookings
 
 type bookings struct {
-	bookings                  map[time.Time]bookingList
+	bookings                  map[uint]bookingList
 	addBooking, updateBooking *sql.Stmt
 }
 
