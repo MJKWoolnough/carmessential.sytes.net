@@ -47,6 +47,7 @@ func main() {
 		BasketInit,
 		User.Init,
 		Admin.Init,
+		Contact.Init,
 	} {
 		if err := init(); err != nil {
 			log.Printf("error during initialisation: %s\n", err)
@@ -58,9 +59,9 @@ func main() {
 	// load schedule from database
 	wrapped := http.NewServeMux()
 	wrapped.Handle("/treatments.html", &Treatments)
+	wrapped.Handle("/contact.html", &Contact)
 	/*
 		wrapped.Handle("/vouchers/", Vouchers)
-		wrapped.Handle("/contact.html", contact)
 		wrapped.Handle("/pricelist.html", Treatments.PriceList)
 		wrapped.Handle("/user/", user)
 	*/
