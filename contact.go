@@ -1,25 +1,35 @@
 package main
 
 import (
-	"fmt"
+	"html/template"
 	"net/http"
+	"path/filepath"
 
 	"github.com/MJKWoolnough/errors"
 	"github.com/MJKWoolnough/form"
+	"github.com/MJKWoolnough/memio"
 )
 
 var Contact contact
 
-type contact struct{}
+type contact struct {
+	emailT *template.Template
+}
 
 func (c *contact) Init() error {
-	if err := Pages.RegisterTemplate("contact.tmpl"); err != nil {
-		return errors.WithContext("error registering contact template: ", err)
+	err := Pages.RegisterTemplate("contact.tmpl")
+	if err != nil {
+		return errors.WithContext("error registering contact page template: ", err)
+	}
+	c.emailT, err = template.ParseFiles(filepath.Join(*filesDir, "contactEmail.tmpl"))
+	if err != nil {
+		return errors.WithContext("error parsing contact email template: ", err)
 	}
 	return nil
 }
 
 type contactValues struct {
+	To, From                             string
 	Name, Email, Phone, Subject, Message string
 	Errors                               form.Errors
 	Done                                 bool
@@ -43,7 +53,11 @@ func (c *contact) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			err := form.Parse(&v, r.PostForm)
 			if err == nil {
 				to := Config.Get("contactTo")
-				if err = Email.Send(to, []byte(fmt.Sprintf("To: %s\r\nFrom: %s\r\nSubject: Message Received\r\n\r\nName: %s\nEmail: %s\nPhone: %s\nSubject: %s\nMessage: %s", to, to, v.Email, v.Phone, v.Subject, v.Message))); err != nil {
+				v.To = to
+				v.From = to
+				var buf memio.Buffer
+				c.emailT.Execute(&buf, &v)
+				if err = Email.Send(to, buf); err != nil {
 					v.Errors = form.Errors{"send": err}
 				}
 				v.Done = true
