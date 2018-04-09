@@ -30,7 +30,7 @@ func (u *user) Init() error {
 	if err != nil {
 		return errors.WithContext("error registering Register template: ", err)
 	}
-	u.emailT, err = template.ParseFiles(filepath.Join(*filesDir, "email.tmpl"))
+	u.emailT, err = template.ParseFiles(filepath.Join(*filesDir, "registrationEmail.tmpl"))
 	if err != nil {
 		return errors.WithContext("error registering Email template: ", err)
 	}
