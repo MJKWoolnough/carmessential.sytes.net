@@ -17,9 +17,9 @@
 							<th>{{$time.String}}</th>{{end}}
 						</tr>
 					</thead>
-					<tbody>{{range $row := .Bookings}}
+					<tbody>{{range $row := .DayData}}
 						<tr>
-							<td>{{$row.Date}}</td>{{range $time := $.Times}}
+							<td>{{$row.Date}}</td>{{range $time := $.Bookings}}
 							<td>{{if $row.Empty $time}}
 								<button type="submit" name="time" value="{{$time}}">Book</button>
 							{{end}}</td>
