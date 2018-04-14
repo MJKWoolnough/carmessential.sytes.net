@@ -41,7 +41,7 @@ func (b bookingList) Swap(i, j int) {
 }
 
 func timeToDate(t time.Time) uint {
-	y, m, d := time.Date()
+	y, m, d := t.Date()
 	return uint(y)*10000 + uint(m)*100 + uint(d)
 }
 
@@ -51,7 +51,7 @@ func (b *bookings) Init(db *sql.DB) error {
 		return errors.WithContext("error creating Booking table: ", err)
 	}
 	brows, err := db.Query("SELECT [ID], [Time], [Treatment], [User], [Order], [Name] FROM [Booking];")
-	if err != nikl {
+	if err != nil {
 		return errors.WithContext("error retrieving booking data: ", err)
 	}
 
@@ -64,7 +64,7 @@ func (b *bookings) Init(db *sql.DB) error {
 		if err != nil {
 			return errors.WithContext("error reading booking row: ", err)
 		}
-		booking.Time = time.Unix(t, 0)
+		booking.Time = time.Unix(int64(t), 0)
 		date := timeToDate(booking.Time)
 		b.bookings[date] = append(b.bookings[date], booking)
 	}
@@ -92,7 +92,7 @@ func (b *bookings) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	treatmentID, _ := strconv.ParseUint(r.PostForm.Get("id"), 10, 32)
 	treatment, exists := Treatments.GetTreatment(uint(treatmentID))
 	if !exists {
-		http.Redirect(w, r, "/")
+		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	}
 	if timeStr := r.PostForm.Get("time"); timeStr != "" {
@@ -120,9 +120,9 @@ func (b *bookings) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	Pages.Write(w, r, "booking.tmpl", struct {
 		Admin bool
 		*Basket
-		Page uint
+		Page uint64
 		Treatment
-		DayData
+		DayData []DayData
 	}{
 		Users.IsAdmin(uid),
 		basket,
