@@ -14,6 +14,7 @@ import (
 
 	"github.com/MJKWoolnough/errors"
 	"github.com/MJKWoolnough/memio"
+	vpages "github.com/MJKWoolnough/pages"
 )
 
 var Treatments treatments
@@ -26,7 +27,7 @@ type Treatment struct {
 	Duration       time.Duration
 	Order          uint
 	DescriptionSrc string
-	Description    *PageBytes
+	Description    *vpages.Bytes
 }
 
 type Category struct {
@@ -44,7 +45,7 @@ type treatments struct {
 	treatments   map[uint]Treatment
 	categories   map[uint]Category
 	categoryT    *template.Template
-	categoryPage *PageBytes
+	categoryPage *vpages.Bytes
 }
 
 func (t *treatments) Init(db *sql.DB) error {
@@ -74,6 +75,7 @@ func (t *treatments) Init(db *sql.DB) error {
 		}
 	}
 
+	// Errors
 	trows, err := db.Query("SELECT [ID], [Name], [Category], [Price], [Duration], [Description], [Order] FROM [Treatment];")
 	if err != nil {
 		return errors.WithContext("error getting Treatment data: ", err)
