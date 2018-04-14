@@ -1,7 +1,7 @@
 {{define "title"}}CARM Essential - Book a Treatment - {{.Name}}{{end}}
 {{define "style"}}book{{end}}
 {{define "body"}}
-			<div>Treatment: {{.Name}}<br />Time: {{.Time}}</div>
+			<div>Treatment: {{.Name}}<br />Duration: {{.Time}}</div>
 			<form action="?" method="post">
 				<input type="hidden" name="treatmentID" value="{{.TreatmentID}}" />{{if gt .Page 3}}
 				<div class="prevNext">
