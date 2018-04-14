@@ -76,6 +76,9 @@ func (b *bookings) Init(db *sql.DB) error {
 	if err = Pages.RegisterTemplate("booking.tmpl"); err != nil {
 		return errors.WithContext("error registering booking template: ", err)
 	}
+	if err = Pages.RegisterTemplate("bookingConfirmation.tmpl"); err != nil {
+		return errors.WithContext("error registering booking confirmation template: ", err)
+	}
 	return nil
 }
 
