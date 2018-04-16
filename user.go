@@ -10,6 +10,7 @@ import (
 	"github.com/MJKWoolnough/authenticate"
 	"github.com/MJKWoolnough/errors"
 	"github.com/MJKWoolnough/memio"
+	vpages "github.com/MJKWoolnough/pages"
 )
 
 var User user
@@ -18,6 +19,8 @@ type user struct {
 	emailT        *template.Template
 	from          string
 	registerCodec *authenticate.Codec
+
+	tempUserPage *vpages.Bytes
 }
 
 func (u *user) Init() error {
@@ -38,6 +41,9 @@ func (u *user) Init() error {
 	if err != nil {
 		return errors.WithContext("error creating registration authenticator: ", err)
 	}
+
+	u.tempUserPage = Pages.Bytes("CARM Essential - User", "default", "USER INDEX")
+
 	return nil
 }
 
@@ -50,7 +56,7 @@ func (u *user) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/admin/", http.StatusFound)
 		return
 	}
-	Pages.Write(w, r, OutputTemplate, "USER INDEX")
+	u.tempUserPage.ServeHTTP(w, r)
 }
 
 func isValidPassword(password string) bool {

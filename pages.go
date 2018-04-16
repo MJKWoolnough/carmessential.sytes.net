@@ -11,8 +11,6 @@ import (
 
 var Pages pages
 
-const OutputTemplate = "Output"
-
 type pages struct {
 	*vpages.Pages
 }
