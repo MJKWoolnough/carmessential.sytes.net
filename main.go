@@ -27,6 +27,9 @@ func main() {
 	flag.Parse()
 	logger = log.New(os.Stderr, *logName, log.LstdFlags)
 
+	if err := Pages.Init(); err != nil {
+		logger.Printf("error initialising pages: %s\n", err)
+	}
 	if err := DB.Init(); err != nil {
 		logger.Printf("error while opening database: %s\n", err)
 		return
@@ -43,7 +46,6 @@ func main() {
 	for _, init := range [...]func() error{
 		Email.Init,
 		Session.Init,
-		Pages.Init,
 		BasketInit,
 		User.Init,
 		Admin.Init,
