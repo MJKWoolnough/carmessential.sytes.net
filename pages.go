@@ -22,6 +22,7 @@ func (p *pages) Init() error {
 		return errors.WithContext("error initialising pages: ", err)
 	}
 	p.Pages.StaticString(vpages.StaticTemplate)
+	p.Pages.Hook(vpages.HookFn(writeHook))
 	return nil
 }
 
@@ -29,7 +30,13 @@ func (p *pages) RegisterTemplate(path string) error {
 	return p.Pages.RegisterFile(path, filepath.Join(*filesDir, path))
 }
 
-func (p *pages) Write(w http.ResponseWriter, r *http.Request, templateName string, body interface{}) {
+type pageData struct {
+	LoggedIn bool
+	*Basket
+	Body interface{}
+}
+
+func writeHook(w http.ResponseWriter, r *http.Request, body interface{}) interface{} {
 	w.Header().Set("Content-Type", "text/html")
 	userID, ok := r.Context().Value("userID").(int64)
 	if !ok {
@@ -39,16 +46,10 @@ func (p *pages) Write(w http.ResponseWriter, r *http.Request, templateName strin
 	if !ok {
 		basket = Session.LoadBasket(r)
 	}
-	if err := p.Pages.Write(w, r, templateName, struct {
-		LoggedIn bool
-		*Basket
-		Body interface{}
-	}{
+	return pageData{
 		LoggedIn: userID > 0,
 		Basket:   basket,
 		Body:     body,
-	}); err != nil {
-		logger.Printf("error writing template: %s", err)
 	}
 }
 
@@ -57,5 +58,5 @@ func NewPageBytes(title, style string, body template.HTML) *vpages.Bytes {
 }
 
 func NewPageFile(title, style, filename string) *vpages.File {
-	return Pages.File(title, style, filename)
+	return Pages.File(title, style, filepath.Join(*filesDir, filename))
 }
