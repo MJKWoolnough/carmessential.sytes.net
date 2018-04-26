@@ -78,8 +78,12 @@ func (u *user) Register(w http.ResponseWriter, r *http.Request) {
 	}
 	r.ParseForm()
 	var form struct {
-		Email, Code, Error, From, Name, NameError, Phone, PhoneError string
-		Stage                                                        int
+		Email, Code, Error string
+		From               string
+		Name, NameError    string
+		Phone, PhoneError  string
+		Stage              int
+		Boundary           string
 	}
 	form.Code = r.Form.Get("code")
 	if form.Code != "" {
@@ -125,6 +129,7 @@ func (u *user) Register(w http.ResponseWriter, r *http.Request) {
 			form.Error = "Email address already registered"
 		} else if isValidEmail(form.Email) {
 			form.Code = base64.StdEncoding.EncodeToString(u.registerCodec.Encode([]byte(form.Email), make([]byte, 0, len(form.Email)+u.registerCodec.Overhead())))
+			form.Boundary = getBoundary(form.Code)
 			form.From = u.from
 			var msg memio.Buffer
 			u.emailT.Execute(&msg, form)

@@ -1,9 +1,13 @@
 package main
 
 import (
+	"encoding/base64"
 	"html/template"
+	"math/rand"
 	"net/http"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/MJKWoolnough/errors"
 	"github.com/MJKWoolnough/form"
@@ -33,6 +37,7 @@ type contactValues struct {
 	Name, Email, Phone, Subject, Message string
 	Errors                               form.Errors
 	Done                                 bool
+	Boundary                             string
 }
 
 func (v *contactValues) ParserList() form.ParserList {
@@ -52,6 +57,7 @@ func (c *contact) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if r.Form.Get("submit") != "" {
 			err := form.Parse(&v, r.PostForm)
 			if err == nil {
+				v.Boundary = getBoundary(v.Name, v.Email, v.Phone, v.Subject, v.Message)
 				to := Config.Get("contactTo")
 				v.To = to
 				v.From = to
@@ -67,4 +73,20 @@ func (c *contact) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	Pages.Write(w, r, "contact.tmpl", &v)
+}
+
+func getBoundary(matches ...string) string {
+	rng := rand.New(rand.Source(time.Now().UnixNano()))
+	var buf [30]byte
+Loop:
+	for {
+		rng.Read(buf[:])
+		str := base64.StdEncoding.EncodeString(buf[:])
+		for _, match := range matches {
+			if strings.Contains(match, str) {
+				continue Loop
+			}
+		}
+		return str
+	}
 }

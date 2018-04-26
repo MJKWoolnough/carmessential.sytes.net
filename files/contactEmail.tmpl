@@ -2,9 +2,9 @@ To: {{.Email}}
 From: {{.From}}
 Subject: Message Recieved
 MIME-Version: 1.0
-Content-Type: multipart/alternative; boundary=boundary
+Content-Type: multipart/alternative; boundary={{.Boundary}}
 
---boundary
+--{{.Boundary}}
 Content-Type: text/plain; charset=utf-8
 
 Name: {{.Name}}
@@ -13,7 +13,7 @@ Phone: {{.Phone}}
 Subject: {{.Subject}}
 Message: {{.Message}}
 
---boundary
+--{{.Boundary}}
 Content-Type: text/html; charset=utf-8
 
 <h2>Message Received</h2>
@@ -38,4 +38,4 @@ Content-Type: text/html; charset=utf-8
 	</tbody>
 </table>
 
---boundary--
+--{{.Boundary}}--
