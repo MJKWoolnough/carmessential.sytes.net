@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/MJKWoolnough/authenticate"
-	"github.com/MJKWoolnough/errors"
-	"github.com/MJKWoolnough/memio"
-	vpages "github.com/MJKWoolnough/pages"
+	"vimagination.zapto.org/authenticate"
+	"vimagination.zapto.org/errors"
+	"vimagination.zapto.org/memio"
+	vpages "vimagination.zapto.org/pages"
 )
 
 var User user

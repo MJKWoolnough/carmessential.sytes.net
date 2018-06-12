@@ -12,9 +12,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/MJKWoolnough/errors"
-	"github.com/MJKWoolnough/memio"
-	vpages "github.com/MJKWoolnough/pages"
+	"vimagination.zapto.org/errors"
+	"vimagination.zapto.org/memio"
+	vpages "vimagination.zapto.org/pages"
 )
 
 var Treatments treatments

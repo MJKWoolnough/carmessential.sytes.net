@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"path/filepath"
 
-	"github.com/MJKWoolnough/errors"
-	vpages "github.com/MJKWoolnough/pages"
+	"vimagination.zapto.org/errors"
+	vpages "vimagination.zapto.org/pages"
 )
 
 var Pages pages

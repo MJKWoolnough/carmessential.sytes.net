@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/MJKWoolnough/errors"
+	"vimagination.zapto.org/errors"
 	_ "github.com/mattn/go-sqlite3"
 )
 

@@ -5,7 +5,7 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/MJKWoolnough/errors"
+	"vimagination.zapto.org/errors"
 )
 
 var Config config

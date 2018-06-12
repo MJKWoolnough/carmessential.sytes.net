@@ -1,8 +1,8 @@
 package main
 
 import (
-	bbc "github.com/MJKWoolnough/bbcode"
-	"github.com/MJKWoolnough/bbcode/bbcodehtml"
+	bbc "vimagination.zapto.org/bbcode"
+	"vimagination.zapto.org/bbcode/bbcodehtml"
 )
 
 var bbcode = bbc.New(bbc.HTMLText,

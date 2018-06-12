@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/MJKWoolnough/errors"
+	"vimagination.zapto.org/errors"
 )
 
 var Bookings bookings
@@ -95,14 +95,11 @@ func (b *bookings) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	}
-	if timeStr := r.PostForm.Get("time"); timeStr != "" {
-		timeSec, err := strconv.ParseUint(timeStr, 10, 64)
-		if err != nil {
-			http.Error(w, "error", http.StatusNotAcceptable)
-			return
-		}
+	if timeSec, err := strconv.ParseUint(r.PostForm.Get("time"), 10, 64); err == nil {
 		// validate time
 		// write confirmation page & book
+		_ = timeSec
+		return
 	}
 	page, _ := strconv.ParseUint(r.PostForm.Get("page"), 10, 32)
 	today := time.Now()

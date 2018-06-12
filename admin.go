@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/MJKWoolnough/errors"
+	"vimagination.zapto.org/errors"
 )
 
 var Admin admin

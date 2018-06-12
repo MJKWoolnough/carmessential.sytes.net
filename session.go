@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/MJKWoolnough/errors"
-	"github.com/MJKWoolnough/memio"
-	"github.com/MJKWoolnough/sessions"
+	"vimagination.zapto.org/errors"
+	"vimagination.zapto.org/memio"
+	"vimagination.zapto.org/sessions"
 )
 
 var Session sess

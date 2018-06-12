@@ -1,4 +1,4 @@
-package main
+package main // import "vimagination.zapto.org/carmessential.sytes.net"
 
 import (
 	"flag"
@@ -8,9 +8,9 @@ import (
 	"os/signal"
 	"strings"
 
-	"github.com/MJKWoolnough/httpbuffer"
-	_ "github.com/MJKWoolnough/httpbuffer/gzip"
-	"github.com/MJKWoolnough/webserver/proxy/client"
+	"vimagination.zapto.org/httpbuffer"
+	_ "vimagination.zapto.org/httpbuffer/gzip"
+	"vimagination.zapto.org/webserver/proxy/client"
 )
 
 var (
