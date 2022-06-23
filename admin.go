@@ -3,11 +3,14 @@ package main
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"net/http"
 	"os"
 	"time"
 
+	"golang.org/x/net/websocket"
 	"vimagination.zapto.org/form"
+	"vimagination.zapto.org/jsonrpc"
 	"vimagination.zapto.org/sessions"
 )
 
@@ -20,6 +23,7 @@ type admin struct {
 	username, password string
 	*sessions.CookieStore
 	sessionData []byte
+	rpc         websocket.Handler
 }
 
 func (a *admin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -33,8 +37,22 @@ func (a *admin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if isAdmin {
+		if r.Header.Get("Upgrade") == "websocket" {
+			a.rpc.ServeHTTP(w, r)
+			return
+		}
+		// show base admin page
 	} else {
+		// show login page
 	}
+}
+
+func (a *admin) serveConn(wconn *websocket.Conn) {
+	jsonrpc.New(wconn, a).Handle()
+}
+
+func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, error) {
+	return nil, nil
 }
 
 func init() {
@@ -45,12 +63,14 @@ func init() {
 	if user != "" && pass != "" && len(key) == 16 && len(data) != 32 {
 		store, err := sessions.NewCookieStore(key, sessions.HTTPOnly(), sessions.Path("/"), sessions.Name("admin"), sessions.Expiry(time.Hour*24*30))
 		if err == nil {
-			http.Handle("/admin", &admin{
+			a := &admin{
 				username:    user,
 				password:    pass,
 				CookieStore: store,
 				sessionData: data,
-			})
+			}
+			a.rpc = websocket.Handler(a.serveConn)
+			http.Handle("/admin", a)
 		}
 	}
 }
