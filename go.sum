@@ -8,6 +8,8 @@ golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1/go.mod h1:bj7SfCRtBDWHUb9sn
 golang.org/x/text v0.3.3 h1:cokOdA+Jmi5PJGXLlLllQSgYigAEfHXJAERHVMaCc2k=
 golang.org/x/text v0.3.3/go.mod h1:5Zoc/QRtKVWzQhOtBMvqHzDpF6irO9z98xDceosuGiQ=
 golang.org/x/tools v0.0.0-20180917221912-90fa682c2a6e/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=
+vimagination.zapto.org/authenticate v1.0.0 h1:eLzBv0txcEVt3l3N6n9QOMPC1rGtEzLvswH5P+8g1BM=
+vimagination.zapto.org/authenticate v1.0.0/go.mod h1:YfddapgT/AVNsjGL5wZ5gsVPjLur7oLw1ZEXOYL19pw=
 vimagination.zapto.org/byteio v1.0.1/go.mod h1:/cW+WW89mJiuXV8qy34hxPInzIiq6TW4DEE9GFrp/gI=
 vimagination.zapto.org/form v1.1.0 h1:9J7f8CpJhDr5+6Ar2SUbv0YTiekaohB+F3W4V+jRKTY=
 vimagination.zapto.org/form v1.1.0/go.mod h1:8h9s+F3k5O3a1xr4f4IlZlxPWZvKrUyeiiBsIoXfh+Y=
@@ -19,3 +21,5 @@ vimagination.zapto.org/jsonrpc v1.0.0/go.mod h1:CEbi2Dg3ZtGWqEzqfj9HG/7XIuOxRoSB
 vimagination.zapto.org/memio v1.0.0/go.mod h1:zHGDKp2tyvF4IAfLti4pKYqCJucXYmmKMb3UMrCHK/4=
 vimagination.zapto.org/reverseproxy v1.0.0 h1:vT7k3CWKLS6R+C0umWngfbfkYgu3pd3+xjwSDEewKKE=
 vimagination.zapto.org/reverseproxy v1.0.0/go.mod h1:BYtVxI8hV1FxO+cl/MJUOubtiYEGBoMX4gEKs85YEqo=
+vimagination.zapto.org/sessions v1.0.0 h1:c5O+bnpOie1eLBMepglATqe7KJVjluB9EyTfehMBIVs=
+vimagination.zapto.org/sessions v1.0.0/go.mod h1:iL8swMjXsFTLK2yyGQQQosPlK3vUFCWUIlQK5OIZq8I=
