@@ -1,12 +1,24 @@
 package main
 
-import "net/http"
+import (
+	"net/http"
+	"os"
+)
 
-type admin struct{}
+type admin struct {
+	username, password string
+}
 
 func (admin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func init() {
-	http.Handle("/admin", &admin{})
+	user := os.Getenv("adminUser")
+	pass := os.Getenv("adminPass")
+	if user != "" && pass != "" {
+		http.Handle("/admin", &admin{
+			username: user,
+			password: pass,
+		})
+	}
 }
