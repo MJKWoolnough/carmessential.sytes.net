@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	_ "embed"
 	"encoding/base64"
 	"encoding/json"
 	"html/template"
@@ -18,6 +19,10 @@ import (
 )
 
 var (
+	//go:embed admin.html
+	adminPage []byte
+	//go:embed login.html
+	loginPage     string
 	adminOnline   uint32
 	oneAdmin      = []byte("{\"id\":-1,\"error\":\"admin online\"}")
 	loginTemplate *template.Template
