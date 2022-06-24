@@ -29,6 +29,8 @@ var (
 	oneAdmin      = []byte("{\"id\":-1,\"error\":\"admin online\"}")
 	loginTemplate *template.Template
 	db            *sql.DB
+	header        string
+	footer        string
 )
 
 type login struct {
@@ -106,6 +108,13 @@ func init() {
 					"[Settings]([Version] INTEGER DEFAULT 0, [Header] TEXT NOT NULL DEFAULT '', [Footer] TEXT NOT NULL DEFAULT '');",
 				} {
 					db.Exec("CREATE TABLE IF NOT EXISTS " + ct)
+				}
+				count := 0
+				db.QueryRow("SELECT COUNT(1) FROM [Settings];").Scan(&count)
+				if count == 0 {
+					db.Exec("INSERT INTO [Settings] ([Version]) VALUES (0);")
+				} else {
+					db.QueryRow("SELECT [Header], [Footer] [Settings];").Scan(&header, &footer)
 				}
 			}
 		}
