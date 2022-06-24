@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"html/template"
+	"io"
 	"net/http"
 	"os"
 	"sync/atomic"
@@ -16,13 +18,15 @@ import (
 )
 
 var (
-	adminOnline uint32
-	oneAdmin    = []byte("{\"id\":-1,\"error\":\"admin online\"}")
+	adminOnline   uint32
+	oneAdmin      = []byte("{\"id\":-1,\"error\":\"admin online\"}")
+	loginTemplate *template.Template
 )
 
 type login struct {
 	Username string `form:"username,post"`
 	Password string `form:"password,post"`
+	Error    string `form:"-"`
 }
 
 type admin struct {
@@ -34,12 +38,14 @@ type admin struct {
 
 func (a *admin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	isAdmin := bytes.Equal(a.CookieStore.Get(r), a.sessionData)
-	if !isAdmin {
-		l := new(login)
-		form.Process(r, l)
+	var l login
+	if !isAdmin && r.Method == http.MethodPost {
+		form.Process(r, &l)
 		if l.Username == a.username && l.Password == a.password {
 			a.CookieStore.Set(w, a.sessionData)
 			isAdmin = true
+		} else {
+			l.Error = "Invalid Username or Password"
 		}
 	}
 	if isAdmin {
@@ -47,9 +53,11 @@ func (a *admin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			a.rpc.ServeHTTP(w, r)
 			return
 		}
-		// show base admin page
+		w.Header().Set("Content-Type", "text/html")
+		io.WriteString(w, adminPage)
 	} else {
-		// show login page
+		w.Header().Set("Content-Type", "text/html")
+		loginTemplate.Execute(w, l)
 	}
 }
 
@@ -82,6 +90,7 @@ func init() {
 			}
 			a.rpc = websocket.Handler(a.serveConn)
 			http.Handle("/admin", a)
+			loginTemplate, _ = template.New("login").Parse(loginPage)
 		}
 	}
 }
