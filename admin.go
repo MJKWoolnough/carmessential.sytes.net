@@ -102,6 +102,11 @@ func init() {
 				a.rpc = websocket.Handler(a.serveConn)
 				http.Handle("/admin", a)
 				loginTemplate, _ = template.New("login").Parse(loginPage)
+				for _, ct := range []string{
+					"[Settings]([Version] INTEGER DEFAULT 0, [Header] TEXT NOT NULL DEFAULT '', [Footer] TEXT NOT NULL DEFAULT '');",
+				} {
+					db.Exec("CREATE TABLE IF NOT EXISTS " + ct)
+				}
 			}
 		}
 	}
