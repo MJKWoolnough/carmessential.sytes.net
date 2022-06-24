@@ -79,7 +79,7 @@ func init() {
 	pass := os.Getenv("adminPass")
 	key, _ := base64.StdEncoding.DecodeString(os.Getenv("adminKey"))
 	data, _ := base64.StdEncoding.DecodeString(os.Getenv("adminData"))
-	if user != "" && pass != "" && len(key) == 16 && len(data) != 32 {
+	if user != "" && pass != "" && len(key) == 16 && len(data) == 32 {
 		store, err := sessions.NewCookieStore(key, sessions.HTTPOnly(), sessions.Path("/"), sessions.Name("admin"), sessions.Expiry(time.Hour*24*30))
 		if err == nil {
 			a := &admin{
