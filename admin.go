@@ -6,12 +6,18 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"sync/atomic"
 	"time"
 
 	"golang.org/x/net/websocket"
 	"vimagination.zapto.org/form"
 	"vimagination.zapto.org/jsonrpc"
 	"vimagination.zapto.org/sessions"
+)
+
+var (
+	adminOnline uint32
+	oneAdmin    = []byte("{\"id\":-1,\"error\":\"admin online\"}")
 )
 
 type login struct {
@@ -48,7 +54,12 @@ func (a *admin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *admin) serveConn(wconn *websocket.Conn) {
-	jsonrpc.New(wconn, a).Handle()
+	if atomic.CompareAndSwapUint32(&adminOnline, 0, 1) {
+		jsonrpc.New(wconn, a).Handle()
+		atomic.StoreUint32(&adminOnline, 0)
+	} else {
+		wconn.Write(oneAdmin)
+	}
 }
 
 func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, error) {
