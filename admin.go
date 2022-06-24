@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"database/sql"
 	_ "embed"
 	"encoding/base64"
 	"encoding/json"
@@ -16,6 +17,8 @@ import (
 	"vimagination.zapto.org/form"
 	"vimagination.zapto.org/jsonrpc"
 	"vimagination.zapto.org/sessions"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var (
@@ -26,6 +29,7 @@ var (
 	adminOnline   uint32
 	oneAdmin      = []byte("{\"id\":-1,\"error\":\"admin online\"}")
 	loginTemplate *template.Template
+	db            *sql.DB
 )
 
 type login struct {
@@ -82,20 +86,24 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 func init() {
 	user := os.Getenv("adminUser")
 	pass := os.Getenv("adminPass")
+	adminDB := os.Getenv("adminDB")
 	key, _ := base64.StdEncoding.DecodeString(os.Getenv("adminKey"))
 	data, _ := base64.StdEncoding.DecodeString(os.Getenv("adminData"))
 	if user != "" && pass != "" && len(key) == 16 && len(data) == 32 {
 		store, err := sessions.NewCookieStore(key, sessions.HTTPOnly(), sessions.Path("/"), sessions.Name("admin"), sessions.Expiry(time.Hour*24*30))
 		if err == nil {
-			a := &admin{
-				username:    user,
-				password:    pass,
-				CookieStore: store,
-				sessionData: data,
+			db, err = sql.Open("sqlite3", adminDB)
+			if err == nil {
+				a := &admin{
+					username:    user,
+					password:    pass,
+					CookieStore: store,
+					sessionData: data,
+				}
+				a.rpc = websocket.Handler(a.serveConn)
+				http.Handle("/admin", a)
+				loginTemplate, _ = template.New("login").Parse(loginPage)
 			}
-			a.rpc = websocket.Handler(a.serveConn)
-			http.Handle("/admin", a)
-			loginTemplate, _ = template.New("login").Parse(loginPage)
 		}
 	}
 }
