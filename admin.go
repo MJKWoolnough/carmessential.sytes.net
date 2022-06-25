@@ -6,10 +6,12 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"io"
 	"net/http"
 	"os"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -31,8 +33,10 @@ var (
 	goodAdmin     = []byte("{\"id\":-1,\"result\": 0}")
 	loginTemplate *template.Template
 	db            *sql.DB
-	header        string
-	footer        string
+
+	hf     sync.RWMutex
+	header string
+	footer string
 )
 
 type login struct {
@@ -76,6 +80,9 @@ func (a *admin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *admin) serveConn(wconn *websocket.Conn) {
+	hf.RLock()
+	fmt.Fprintf(wconn, "{\"id\":-2,\"result\":{\"header\":%q,\"footer\":%q}}", header, footer)
+	hf.RUnlock()
 	if atomic.CompareAndSwapUint32(&adminOnline, 0, 1) {
 		wconn.Write(goodAdmin)
 		jsonrpc.New(wconn, a).Handle()
