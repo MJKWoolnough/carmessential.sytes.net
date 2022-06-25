@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"html/template"
+	"io"
 	"net/http"
 	"os"
 	"sync/atomic"
@@ -67,7 +68,9 @@ func (a *admin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Write(adminPage)
 	} else {
 		w.Header().Set("Content-Type", "text/html")
+		io.WriteString(w, header)
 		loginTemplate.Execute(w, l)
+		io.WriteString(w, footer)
 	}
 }
 
