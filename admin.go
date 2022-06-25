@@ -28,6 +28,7 @@ var (
 	loginPage     string
 	adminOnline   uint32
 	oneAdmin      = []byte("{\"id\":-1,\"error\":\"admin online\"}")
+	goodAdmin     = []byte("{\"id\":-1,\"result\": 0}")
 	loginTemplate *template.Template
 	db            *sql.DB
 	header        string
@@ -76,6 +77,7 @@ func (a *admin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (a *admin) serveConn(wconn *websocket.Conn) {
 	if atomic.CompareAndSwapUint32(&adminOnline, 0, 1) {
+		wconn.Write(goodAdmin)
 		jsonrpc.New(wconn, a).Handle()
 		atomic.StoreUint32(&adminOnline, 0)
 	} else {
