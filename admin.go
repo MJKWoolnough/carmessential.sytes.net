@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"database/sql"
 	_ "embed"
 	"encoding/base64"
@@ -57,7 +58,8 @@ func (a *admin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var l login
 	if !isAdmin && r.Method == http.MethodPost {
 		form.Process(r, &l)
-		if l.Username == a.username && l.Password == a.password {
+		pass := fmt.Sprintf("%x", sha256.Sum256([]byte(l.Password)))
+		if l.Username == a.username && pass == a.password {
 			a.CookieStore.Set(w, a.sessionData)
 			isAdmin = true
 		} else {
