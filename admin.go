@@ -104,7 +104,7 @@ func init() {
 	adminDB := os.Getenv("adminDB")
 	key, _ := base64.StdEncoding.DecodeString(os.Getenv("adminKey"))
 	data, _ := base64.StdEncoding.DecodeString(os.Getenv("adminData"))
-	if user != "" && pass != "" && len(key) == 16 && len(data) == 32 {
+	if user != "" && len(pass) == 64 && len(key) == 16 && len(data) == 32 {
 		store, err := sessions.NewCookieStore(key, sessions.HTTPOnly(), sessions.Path("/"), sessions.Name("admin"), sessions.Expiry(time.Hour*24*30))
 		if err == nil {
 			db, err = sql.Open("sqlite3", adminDB)
