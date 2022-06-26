@@ -1,4 +1,5 @@
 import {WS} from './lib/conn.js';
+import {clearNode} from './lib/dom.js';
 import {div} from './lib/html.js';
 import {RPC} from './lib/rpc.js';
 
@@ -10,7 +11,10 @@ footer = "";
 export const rpc = {} as {
 },
 body = div(),
-ready = pageLoad.then(() => WS("/admin")).then(ws => {
+ready = pageLoad.then(() => {
+	clearNode(document.body, body);
+	return WS("/admin")
+}).then(ws => {
 	const arpc = new RPC(ws);
 	return arpc.await(-2).then(({header: h, footer: f}: {header: string, footer: string}) => {
 		header = h;
