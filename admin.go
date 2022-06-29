@@ -156,7 +156,7 @@ func adminInit() (*admin, error) {
 			return nil, err
 		}
 	} else {
-		if err = db.QueryRow("SELECT [Header], [Footer] [Settings];").Scan(&header, &footer); err != nil {
+		if err = db.QueryRow("SELECT [Header], [Footer] FROM [Settings];").Scan(&header, &footer); err != nil {
 			return nil, err
 		}
 	}
