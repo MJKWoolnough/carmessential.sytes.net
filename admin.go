@@ -25,6 +25,12 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+const (
+	setHeaderFooter = iota
+
+	totalStmts
+)
+
 var (
 	//go:embed admin.html
 	adminPage []byte
@@ -39,6 +45,8 @@ var (
 	hf     sync.RWMutex
 	header string
 	footer string
+
+	statements [totalStmts]*sql.Stmt
 )
 
 type login struct {
@@ -159,6 +167,15 @@ func adminInit() (*admin, error) {
 		if err = db.QueryRow("SELECT [Header], [Footer] FROM [Settings];").Scan(&header, &footer); err != nil {
 			return nil, err
 		}
+	}
+	for n, ps := range []string{
+		"UPDATE [Settings] SET [Header] = ?, [Footer] = ?;",
+	} {
+		stmt, err := db.Prepare(ps)
+		if err != nil {
+			return nil, err
+		}
+		statements[n] = stmt
 	}
 	return a, nil
 }
