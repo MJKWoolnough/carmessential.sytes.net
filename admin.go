@@ -31,7 +31,7 @@ var (
 	loginPage     string
 	adminOnline   uint32
 	oneAdmin      = []byte("{\"id\":-1,\"error\":{\"code\":1,\"message\":\"admin online\"}}")
-	goodAdmin     = []byte("{\"id\":-1,\"result\": 0}")
+	goodAdmin     = []byte("{\"id\":-1,\"result\":0}")
 	loginTemplate *template.Template
 	db            *sql.DB
 
