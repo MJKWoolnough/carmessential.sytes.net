@@ -119,7 +119,7 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 		hf.Unlock()
 		return nil, nil
 	}
-	return nil, nil
+	return nil, errors.New("unknown endpoint")
 }
 
 func init() {
