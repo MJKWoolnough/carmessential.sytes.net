@@ -5,7 +5,7 @@ import {body, ready} from './rpc.js';
 ready.catch(e => {
 	clearNode(body, [
 		h1("Error"),
-		div(e.message)
+		div(e.message ?? "Unknown Error")
 	]);
 	throw e;
 }).then(() => {
