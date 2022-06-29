@@ -104,6 +104,21 @@ func (a *admin) serveConn(wconn *websocket.Conn) {
 }
 
 func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, error) {
+	switch method {
+	case "setHeaderFooter":
+		var headfoot [2]string
+		if err := json.Unmarshal(data, &headfoot); err != nil {
+			return nil, err
+		}
+		if _, err := statements[setHeaderFooter].Exec(headfoot[0], headfoot[1]); err != nil {
+			return nil, err
+		}
+		hf.Lock()
+		header = headfoot[0]
+		footer = headfoot[1]
+		hf.Unlock()
+		return nil, nil
+	}
 	return nil, nil
 }
 
