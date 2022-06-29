@@ -7,6 +7,7 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -99,38 +100,65 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 }
 
 func init() {
+	if a, err := adminInit(); err == nil {
+		http.Handle("/admin", a)
+	}
+}
+
+func adminInit() (*admin, error) {
 	user := os.Getenv("adminUser")
+	if user == "" {
+		return nil, errors.New("no admin username")
+	}
 	pass := os.Getenv("adminPass")
+	if len(pass) != 64 {
+		return nil, errors.New("no admin password")
+	}
 	adminDB := os.Getenv("adminDB")
+	if adminDB == "" {
+		return nil, errors.New("no admin database")
+	}
 	key, _ := base64.StdEncoding.DecodeString(os.Getenv("adminKey"))
+	if len(key) != 16 {
+		return nil, errors.New("no admin key")
+	}
 	data, _ := base64.StdEncoding.DecodeString(os.Getenv("adminData"))
-	if user != "" && len(pass) == 64 && len(key) == 16 && len(data) == 32 {
-		store, err := sessions.NewCookieStore(key, sessions.HTTPOnly(), sessions.Path("/"), sessions.Name("admin"), sessions.Expiry(time.Hour*24*30))
-		if err == nil {
-			db, err = sql.Open("sqlite3", adminDB)
-			if err == nil {
-				a := &admin{
-					username:    user,
-					password:    pass,
-					CookieStore: store,
-					sessionData: data,
-				}
-				a.rpc = websocket.Handler(a.serveConn)
-				http.Handle("/admin", a)
-				loginTemplate, _ = template.New("login").Parse(loginPage)
-				for _, ct := range []string{
-					"[Settings]([Version] INTEGER DEFAULT 0, [Header] TEXT NOT NULL DEFAULT '', [Footer] TEXT NOT NULL DEFAULT '');",
-				} {
-					db.Exec("CREATE TABLE IF NOT EXISTS " + ct)
-				}
-				count := 0
-				db.QueryRow("SELECT COUNT(1) FROM [Settings];").Scan(&count)
-				if count == 0 {
-					db.Exec("INSERT INTO [Settings] ([Version]) VALUES (0);")
-				} else {
-					db.QueryRow("SELECT [Header], [Footer] [Settings];").Scan(&header, &footer)
-				}
-			}
+	if len(data) != 32 {
+		return nil, errors.New("no admin data")
+	}
+	store, err := sessions.NewCookieStore(key, sessions.HTTPOnly(), sessions.Path("/"), sessions.Name("admin"), sessions.Expiry(time.Hour*24*30))
+	if err != nil {
+		return nil, err
+	}
+	db, err = sql.Open("sqlite3", adminDB)
+	if err != nil {
+		return nil, err
+	}
+	a := &admin{
+		username:    user,
+		password:    pass,
+		CookieStore: store,
+		sessionData: data,
+	}
+	a.rpc = websocket.Handler(a.serveConn)
+	loginTemplate, _ = template.New("login").Parse(loginPage)
+	for _, ct := range []string{
+		"[Settings]([Version] INTEGER DEFAULT 0, [Header] TEXT NOT NULL DEFAULT '', [Footer] TEXT NOT NULL DEFAULT '');",
+	} {
+		if _, err = db.Exec("CREATE TABLE IF NOT EXISTS " + ct); err != nil {
+			return nil, err
 		}
 	}
+	count := 0
+	db.QueryRow("SELECT COUNT(1) FROM [Settings];").Scan(&count)
+	if count == 0 {
+		if _, err = db.Exec("INSERT INTO [Settings] ([Version]) VALUES (0);"); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = db.QueryRow("SELECT [Header], [Footer] [Settings];").Scan(&header, &footer); err != nil {
+			return nil, err
+		}
+	}
+	return a, nil
 }
