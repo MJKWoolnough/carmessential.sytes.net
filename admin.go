@@ -20,15 +20,25 @@ import (
 	"golang.org/x/net/websocket"
 	"vimagination.zapto.org/form"
 	"vimagination.zapto.org/jsonrpc"
+	"vimagination.zapto.org/memio"
 	"vimagination.zapto.org/sessions"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
+type treatment struct {
+	ID          uint64 `json:"id"`
+	Name        string `json:"name"`
+	Group       string `json:"group"`
+	Price       uint32 `json:"price"`
+	Description string `json:"description"`
+	Duration    uint32 `json:"duration"`
+}
+
 const (
 	setHeaderFooter = iota
 
-	getTreatments
+	listTreatments
 	addTreatment
 	setTreatment
 	removeTreatment
@@ -122,6 +132,59 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 		header = headfoot[0]
 		footer = headfoot[1]
 		hf.Unlock()
+		return nil, nil
+	case "listTreatments":
+		r, err := statements[listTreatments].Query()
+		if err != nil {
+			return nil, err
+		}
+		buf := memio.Buffer("[")
+		first := true
+		for r.Next() {
+			var (
+				id                       uint64
+				price, duration          uint32
+				name, group, description string
+			)
+			if err := r.Scan(id, name, group, price, description, duration); err != nil {
+				return nil, err
+			}
+			if first {
+				first = false
+			} else {
+				buf = append(buf, ',')
+			}
+			fmt.Fprintf(&buf, "%d,%q,%q,%d,%q,%d", id, name, group, price, description, duration)
+		}
+		buf = append(buf, ']')
+		return buf, nil
+	case "addTreatment":
+		var t treatment
+		if err := json.Unmarshal(data, &t); err != nil {
+			return nil, err
+		}
+		r, err := statements[addTreatment].Exec(t.Name, t.Group, t.Price, t.Description, t.Duration)
+		if err != nil {
+			return nil, err
+		}
+		return r.LastInsertId()
+	case "setTreatment":
+		var t treatment
+		if err := json.Unmarshal(data, &t); err != nil {
+			return nil, err
+		}
+		if _, err := statements[setTreatment].Exec(t.Name, t.Group, t.Price, t.Description, t.Duration, t.ID); err != nil {
+			return nil, err
+		}
+		return nil, nil
+	case "removeTreatment":
+		var id uint32
+		if err := json.Unmarshal(data, &id); err != nil {
+			return nil, err
+		}
+		if _, err := statements[removeTreatment].Exec(id); err != nil {
+			return nil, err
+		}
 		return nil, nil
 	}
 	return nil, errors.New("unknown endpoint")
