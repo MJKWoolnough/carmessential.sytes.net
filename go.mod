@@ -9,6 +9,7 @@ require (
 	vimagination.zapto.org/form v1.1.0
 	vimagination.zapto.org/httpgzip v1.0.0
 	vimagination.zapto.org/jsonrpc v1.0.0
+	vimagination.zapto.org/memio v1.0.0
 	vimagination.zapto.org/reverseproxy v1.0.0
 	vimagination.zapto.org/sessions v1.0.0
 )
