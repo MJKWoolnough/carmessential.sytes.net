@@ -28,6 +28,11 @@ import (
 const (
 	setHeaderFooter = iota
 
+	getTreatments
+	addTreatment
+	setTreatment
+	removeTreatment
+
 	totalStmts
 )
 
@@ -186,6 +191,12 @@ func adminInit() (*admin, error) {
 	}
 	for n, ps := range []string{
 		"UPDATE [Settings] SET [Header] = ?, [Footer] = ?;",
+
+		// Treatments
+		"SELECT [ID], [Name], [Group], [Price], [Description], [Duration] FROM [Treatments];",
+		"INSERT INTO [Treatments] ([Name], [Group], [Price], [Description], [Duration]) VALUES (?, ?, ?, ?, ?);",
+		"UPDATE [Treatments] SET [Name] = ?, [Group] = ?, [Price] = ?, [Description] = ?, [Duration] = ? WHERE [ID] = ?;",
+		"DELETE FROM [Treatments] WHERE [ID] = ?;",
 	} {
 		stmt, err := db.Prepare(ps)
 		if err != nil {
