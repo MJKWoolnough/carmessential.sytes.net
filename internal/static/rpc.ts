@@ -29,7 +29,7 @@ ready = pageLoad.then(() => {
 		setHeaderFooter(h, f);
 		return arpc.await(-1).then(() => {
 			Object.freeze(Object.assign(rpc, {
-				"setHeaderFooter": (header: string, footer: string) => arpc.request("setHeaderFooter", [header, footer]).finally(() => setHeaderFooter(h, f))
+				"setHeaderFooter": (header: string, footer: string) => arpc.request("setHeaderFooter", [header, footer]).finally(() => setHeaderFooter(header, footer))
 			}));
 		});
 	});
