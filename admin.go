@@ -132,6 +132,7 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 		header = headfoot[0]
 		footer = headfoot[1]
 		hf.Unlock()
+		generatePages(-1)
 		return nil, nil
 	case "listTreatments":
 		r, err := statements[listTreatments].Query()
@@ -167,7 +168,12 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 		if err != nil {
 			return nil, err
 		}
-		return r.LastInsertId()
+		id, err := r.LastInsertId()
+		if err != nil {
+			return nil, err
+		}
+		generatePages(id)
+		return id, nil
 	case "setTreatment":
 		var t treatment
 		if err := json.Unmarshal(data, &t); err != nil {
@@ -176,6 +182,7 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 		if _, err := statements[setTreatment].Exec(t.Name, t.Group, t.Price, t.Description, t.Duration, t.ID); err != nil {
 			return nil, err
 		}
+		generatePages(int64(t.ID))
 		return nil, nil
 	case "removeTreatment":
 		var id uint32
@@ -185,9 +192,14 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 		if _, err := statements[removeTreatment].Exec(id); err != nil {
 			return nil, err
 		}
+		// remove treatment page
+		generatePages(-1)
 		return nil, nil
 	}
 	return nil, errors.New("unknown endpoint")
+}
+
+func generatePages(id int64) {
 }
 
 func init() {
