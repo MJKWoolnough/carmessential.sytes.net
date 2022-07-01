@@ -1,3 +1,4 @@
+import type {RPCType} from './types.js';
 import {WS} from './lib/conn.js';
 import {clearNode} from './lib/dom.js';
 import {div} from './lib/html.js';
@@ -16,9 +17,7 @@ const setHeaderFooter = (h: string, f: string) => {
 	document.title = "Admin";
 };
 
-export const rpc = {} as {
-	setHeaderFooter: (header: string, footer: string) => Promise<void>;
-},
+export const rpc = {} as RPCType,
 body = div(),
 ready = pageLoad.then(() => {
 	clearNode(document.body, body);
