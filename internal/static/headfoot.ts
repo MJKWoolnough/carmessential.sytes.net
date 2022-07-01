@@ -1,6 +1,7 @@
 import {amendNode, clearNode} from './lib/dom.js';
 import {br, button, div, fieldset, legend, textarea} from './lib/html.js';
-import {footer, header, ready, rpc} from './rpc.js';
+import {footer, header} from './pages.js';
+import {ready, rpc} from './rpc.js';
 import {labels} from './shared.js';
 
 const h = textarea(),
