@@ -28,7 +28,11 @@ ready = pageLoad.then(() => {
 		setHeaderFooter(h, f);
 		return arpc.await(-1).then(() => {
 			Object.freeze(Object.assign(rpc, {
-				"setHeaderFooter": (header: string, footer: string) => arpc.request("setHeaderFooter", [header, footer]).finally(() => setHeaderFooter(header, footer))
+				"setHeaderFooter": (header: string, footer: string) => arpc.request("setHeaderFooter", [header, footer]).finally(() => setHeaderFooter(header, footer)),
+				"listTreatments": () => arpc.request("listTreatments"),
+				"addTreatment": (name: string, group: string, price: number, description: string, duration: number) => arpc.request("addTreatment", {name, group, price, description, duration}),
+				"setTreatment": (id: number, name: string, group: string, price: number, description: string, duration: number) => arpc.request("addTreatment", {id, name, group, price, description, duration}),
+				"removeTreatment": (id: number) => arpc.request("removeTreatment", id)
 			}));
 		});
 	});
