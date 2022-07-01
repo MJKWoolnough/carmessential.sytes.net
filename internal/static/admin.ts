@@ -1,7 +1,8 @@
 import {amendNode, clearNode} from './lib/dom.js';
 import {div, h1, li, ul} from './lib/html.js';
 import setHeaderFooter from './headfoot.js';
-import {body, ready} from './rpc.js';
+import {body} from './pages.js';
+import {ready} from './rpc.js';
 import treatments from './treatments.js';
 
 ready.catch(e => {
