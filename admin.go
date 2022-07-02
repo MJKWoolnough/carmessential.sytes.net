@@ -158,7 +158,7 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 			fmt.Fprintf(&buf, "%d,%q,%q,%d,%q,%d", id, name, group, price, description, duration)
 		}
 		buf = append(buf, ']')
-		return buf, nil
+		return json.RawMessage(buf), nil
 	case "addTreatment":
 		var t treatment
 		if err := json.Unmarshal(data, &t); err != nil {
