@@ -1,8 +1,8 @@
+import {amendNode} from './lib/dom.js';
 import {div, li, ul} from './lib/html.js';
 import {NodeArray, NodeMap, node, stringSort} from './lib/nodes.js';
+import {registerPage} from './pages.js';
 import {ready, rpc} from './rpc.js';
-
-export default div();
 
 type Treatment = {
 	name: string;
@@ -15,7 +15,8 @@ type Group = {
 	[node]: HTMLUListElement;
 }
 
-const treatmentSort = (a: Treatment, b: Treatment) => stringSort(a.name, b.name);
+const treatmentSort = (a: Treatment, b: Treatment) => stringSort(a.name, b.name),
+      contents = div();
 
 ready.then(() => rpc.listTreatments().then(treatments => {
 	const groups = new NodeMap<string, Group>(ul(), (a, b) => stringSort(a.group, b.group))
@@ -33,4 +34,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 			[node]: li(name)
 		});
 	}
+	amendNode(contents, groups[node]);
 }));
+
+registerPage("treatments", "Edit Treatments", contents);
