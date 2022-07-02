@@ -54,4 +54,15 @@ registerPage("headFoot", "Set Header/Footer", div(fieldset([
 	br(),
 	update,
 	clear
-])));
+])), () => {
+	if (h.value === header && f.value === footer) {
+		return Promise.resolve();
+	}
+	return new Promise(sFn => {
+		if (confirm("Unsaved changes to Header & Footer. Are you sure you wish to change page?")) {
+			h.value = header;
+			f.value = footer;
+			sFn();
+		}
+	});
+});
