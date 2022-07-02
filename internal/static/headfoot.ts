@@ -1,6 +1,6 @@
 import {amendNode, clearNode} from './lib/dom.js';
 import {br, button, div, fieldset, legend, textarea} from './lib/html.js';
-import {footer, header} from './pages.js';
+import {footer, header, registerPage} from './pages.js';
 import {ready, rpc} from './rpc.js';
 import {labels} from './shared.js';
 
@@ -46,7 +46,7 @@ ready.then(() => {
 	amendNode(f, footer);
 });
 
-export default div(fieldset([
+registerPage("headFoot", "Set Header/Footer", div(fieldset([
 	legend("Set Header & Footer"),
 	labels("Header: ", h),
 	br(),
@@ -54,4 +54,4 @@ export default div(fieldset([
 	br(),
 	update,
 	clear
-]));
+])));
