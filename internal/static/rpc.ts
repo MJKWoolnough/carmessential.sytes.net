@@ -1,16 +1,12 @@
 import type {RPCType} from './types.js';
 import {WS} from './lib/conn.js';
-import {clearNode} from './lib/dom.js';
 import {RPC} from './lib/rpc.js';
-import {body, setHeaderFooter} from './pages.js';
+import {setHeaderFooter} from './pages.js';
 
 declare const pageLoad: Promise<void>;
 
 export const rpc = {} as RPCType,
-ready = pageLoad.then(() => {
-	clearNode(document.body, body);
-	return WS("/admin")
-}).then(ws => {
+ready = pageLoad.then(() => WS("/admin")).then(ws => {
 	const arpc = new RPC(ws);
 	return arpc.await(-2).then(({header: h, footer: f}: {header: string, footer: string}) => {
 		setHeaderFooter(h, f);
