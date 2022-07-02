@@ -12,7 +12,27 @@ type Page = {
 export let header = "",
 footer = "";
 
-let currPage = "";
+let currPage = "",
+    css = `
+#adminMenu {
+	list-style: none;
+	padding: 0;
+}
+
+#adminMenu > li {
+	background-color: #fff;
+	color: #000;
+	cursor: pointer;
+	display: inline-block;
+	padding: 0 1em;
+	text-align: center;
+}
+
+#adminMenu > li:hover {
+	background-color: #000;
+	color: #fff;
+}
+`;
 
 const body = div(),
       section = div(),
@@ -38,6 +58,9 @@ registerPage = (id: string, title: string, contents: HTMLElement, onchange?: () 
 			}
 		}}, title) : document.createComment("")
 	});
+},
+addCSS = (style: string) => {
+	css += style;
 };
 
 ready.catch(e => {
@@ -50,26 +73,7 @@ ready.catch(e => {
 	}
 	throw e;
 }).then(() => {
-	amendNode(document.head, style({"type": "text/css"}, `
-#adminMenu {
-	list-style: none;
-	padding: 0;
-}
-
-#adminMenu > li {
-	background-color: #fff;
-	color: #000;
-	cursor: pointer;
-	display: inline-block;
-	padding: 0 1em;
-	text-align: center;
-}
-
-#adminMenu > li:hover {
-	background-color: #000;
-	color: #fff;
-}
-`));
+	amendNode(document.head, style({"type": "text/css"}, css));
 	amendNode(body, [
 		pages[node],
 		section
