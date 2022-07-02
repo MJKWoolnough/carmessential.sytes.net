@@ -6,7 +6,7 @@ import {ready} from './rpc.js';
 type Page = {
 	id: string;
 	fn?: () => Promise<void>;
-	[node]: HTMLLIElement;
+	[node]: HTMLLIElement | Comment;
 }
 
 export let header = "",
@@ -29,14 +29,14 @@ registerPage = (id: string, title: string, contents: HTMLElement, onchange?: () 
 	pages.set(id, {
 		id,
 		fn: onchange,
-		[node]: li({"onclick": () => {
+		[node]: title ? li({"onclick": () => {
 			if (currPage !== id) {
 				(pages.get(currPage)?.fn?.() ?? Promise.resolve()).then(() => {
 					clearNode(section, contents);
 					currPage = id;
 				});
 			}
-		}}, title)
+		}}, title) : document.createComment("")
 	});
 };
 
