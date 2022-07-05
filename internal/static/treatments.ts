@@ -40,12 +40,12 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 		"duration": 1
 	      },
 	      setTreatment = (treatment: Treatment = noTreatment) => {
-		      amendNode(treatmentName, {"value": treatment.name});
-		      amendNode(treatmentPrice, {"value": treatment.price / 100});
-		      amendNode(treatmentDescription, {"value": treatment.description});
-		      amendNode(treatmentDuration, {"value": treatment.duration});
-		      currTreatment = treatment;
-		      setPage("setTreatment");
+		 treatmentName.value = treatment.name;
+		 treatmentPrice.value = (treatment.price / 100) + "";
+		 treatmentDescription.value = treatment.description;
+		 treatmentDuration.value = treatment.duration + "";
+		 currTreatment = treatment;
+		 setPage("setTreatment");
 	      };
 	let currTreatment: Treatment = noTreatment;
 	for (const [_id, name, group, price, description, duration]  of treatments) {
