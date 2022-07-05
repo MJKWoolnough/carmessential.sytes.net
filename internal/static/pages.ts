@@ -62,7 +62,7 @@ setPage = (id: string) => {
 	if (currPage !== id) {
 		const page = pages.get(id);
 		if (page) {
-			(page.fn?.() ?? Promise.resolve()).then(() => {
+			(pages.get(currPage)?.fn?.() ?? Promise.resolve()).then(() => {
 				clearNode(section, page.contents);
 				currPage = id;
 			});
