@@ -33,6 +33,24 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 	      treatmentDescription = textarea(),
 	      treatmentDuration = input({"type": "number", "step": 1, "min": 1, "value": 1}),
 	      submitTreatment = button({"onclick": function(this: HTMLButtonElement) {
+		if (!treatmentName.value) {
+			alert("Need a Name");
+		} else if (!treatmentPrice.value) {
+			alert("Need a Price");
+		} else if (!treatmentDescription.value) {
+			alert("Need a Description");
+		} else if (!treatmentDuration.value) {
+			alert("Need a Duration");
+		} else {
+			const t: Treatment = {
+				"id": currTreatment.id,
+				"name": treatmentName.value,
+				"price": Math.floor(parseFloat(treatmentPrice.value) * 100),
+				"description": treatmentDescription.value,
+				"duration": parseInt(treatmentDuration.value)
+			      };
+			(t.id === -1 ? rpc.addTreatment(t.name, "", t.price, t.description, t.duration).then(id => t.id = id) : rpc.setTreatment(t.id, t.name, "", t.price, t.description, t.duration)).then(() => currTreatment = t);
+		}
 	      }}, "Create Treatment"),
 	      noTreatment = {
 		"id": -1,
