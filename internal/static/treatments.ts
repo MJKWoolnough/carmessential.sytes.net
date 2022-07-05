@@ -10,12 +10,15 @@ type Treatment = {
 	price: number;
 	description: string;
 	duration: number;
+}
+
+type TreatmentNode = Treatment & {
 	[node]: HTMLLIElement;
 }
 
 type Group = {
 	group: string;
-	arr: NodeArray<Treatment, HTMLUListElement>;
+	arr: NodeArray<TreatmentNode, HTMLUListElement>;
 	[node]: HTMLUListElement;
 }
 
@@ -30,16 +33,24 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 	      treatmentDuration = input({"type": "number", "step": 1, "min": 1, "value": 1}),
 	      submitTreatment = button({"onclick": function(this: HTMLButtonElement) {
 	      }}, "Create Treatment"),
-	      setTreatment = (treatment?: Treatment) => {
-		      amendNode(treatmentName, {"value": treatment?.name ?? ""});
-		      amendNode(treatmentPrice, {"value": (treatment?.price ?? 0) / 100});
-		      amendNode(treatmentDescription, {"value": treatment?.description ?? ""});
-		      amendNode(treatmentDuration, {"value": treatment?.duration ?? 1});
+	      noTreatment = {
+		"name": "",
+		"price": 0,
+		"description": "",
+		"duration": 1
+	      },
+	      setTreatment = (treatment: Treatment = noTreatment) => {
+		      amendNode(treatmentName, {"value": treatment.name});
+		      amendNode(treatmentPrice, {"value": treatment.price / 100});
+		      amendNode(treatmentDescription, {"value": treatment.description});
+		      amendNode(treatmentDuration, {"value": treatment.duration});
+		      currTreatment = treatment;
 		      setPage("setTreatment");
 	      };
+	let currTreatment: Treatment = noTreatment;
 	for (const [_id, name, group, price, description, duration]  of treatments) {
 		if (!groups.has(group)) {
-			const arr = new NodeArray<Treatment, HTMLUListElement>(ul(), treatmentSort);
+			const arr = new NodeArray<TreatmentNode, HTMLUListElement>(ul(), treatmentSort);
 			groups.set(group, {
 				arr,
 				group,
@@ -68,7 +79,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 		labels("Treatment Duration (m): ", treatmentDuration),
 		br(),
 		submitTreatment
-	]));
+	]), );
 }));
 
 registerPage("treatments", "Edit Treatments", contents);
