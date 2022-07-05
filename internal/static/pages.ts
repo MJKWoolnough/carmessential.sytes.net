@@ -45,6 +45,7 @@ export const setHeaderFooter = (h: string, f: string) => {
 	document.documentElement.innerHTML = `${h}<div id="ADMINBODY"></div>${f}`;
 	document.getElementById("ADMINBODY")!.replaceWith(body);
 	document.title = "Admin";
+	amendNode(document.head, style({"type": "text/css"}, css));
 },
 registerPage = (id: string, title: string, contents: HTMLElement, onchange?: () => Promise<void>) => {
 	pages.set(id, {
@@ -78,10 +79,7 @@ ready.catch(e => {
 		clearNode(document.body, body);
 	}
 	throw e;
-}).then(() => {
-	amendNode(document.head, style({"type": "text/css"}, css));
-	amendNode(body, [
-		pages[node],
-		section
-	]);
-});
+}).then(() => amendNode(body, [
+	pages[node],
+	section
+]));
