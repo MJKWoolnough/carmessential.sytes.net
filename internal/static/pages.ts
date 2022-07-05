@@ -5,6 +5,7 @@ import {ready} from './rpc.js';
 
 type Page = {
 	id: string;
+	contents: HTMLElement;
 	fn?: () => Promise<void>;
 	[node]: HTMLLIElement | Comment;
 }
@@ -48,19 +49,24 @@ export const setHeaderFooter = (h: string, f: string) => {
 registerPage = (id: string, title: string, contents: HTMLElement, onchange?: () => Promise<void>) => {
 	pages.set(id, {
 		id,
+		contents,
 		fn: onchange,
-		[node]: title ? li({"onclick": () => {
-			if (currPage !== id) {
-				(pages.get(currPage)?.fn?.() ?? Promise.resolve()).then(() => {
-					clearNode(section, contents);
-					currPage = id;
-				});
-			}
-		}}, title) : document.createComment("")
+		[node]: title ? li({"onclick": () => setPage(id)}, title) : document.createComment("")
 	});
 },
 addCSS = (style: string) => {
 	css += style;
+},
+setPage = (id: string) => {
+	if (currPage !== id) {
+		const page = pages.get(currPage);
+		if (page) {
+			(page.fn?.() ?? Promise.resolve()).then(() => {
+				clearNode(section, page.contents);
+				currPage = id;
+			});
+		};
+	}
 };
 
 ready.catch(e => {
