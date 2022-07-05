@@ -6,6 +6,7 @@ import {labels} from './shared.js';
 import {ready, rpc} from './rpc.js';
 
 type Treatment = {
+	id: number;
 	name: string;
 	price: number;
 	description: string;
@@ -34,6 +35,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 	      submitTreatment = button({"onclick": function(this: HTMLButtonElement) {
 	      }}, "Create Treatment"),
 	      noTreatment = {
+		"id": -1,
 		"name": "",
 		"price": 0,
 		"description": "",
@@ -48,7 +50,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 		 setPage("setTreatment");
 	      };
 	let currTreatment: Treatment = noTreatment;
-	for (const [_id, name, group, price, description, duration]  of treatments) {
+	for (const [id, name, group, price, description, duration]  of treatments) {
 		if (!groups.has(group)) {
 			const arr = new NodeArray<TreatmentNode, HTMLUListElement>(ul(), treatmentSort);
 			groups.set(group, {
@@ -58,6 +60,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 			});
 		}
 		groups.get(group)?.arr.push({
+			id,
 			name, 
 			price,
 			description,
