@@ -1,11 +1,15 @@
 import {amendNode} from './lib/dom.js';
-import {div, li, ul} from './lib/html.js';
+import {br, button, div, input, li, textarea, ul} from './lib/html.js';
 import {NodeArray, NodeMap, node, stringSort} from './lib/nodes.js';
-import {registerPage} from './pages.js';
+import {registerPage, setPage} from './pages.js';
+import {labels} from './shared.js';
 import {ready, rpc} from './rpc.js';
 
 type Treatment = {
 	name: string;
+	price: number;
+	description: string;
+	duration: number;
 	[node]: HTMLLIElement;
 }
 
@@ -19,8 +23,21 @@ const treatmentSort = (a: Treatment, b: Treatment) => stringSort(a.name, b.name)
       contents = div();
 
 ready.then(() => rpc.listTreatments().then(treatments => {
-	const groups = new NodeMap<string, Group>(ul(), (a, b) => stringSort(a.group, b.group))
-	for (const [_id, name, group, _price, _description, _duration]  of treatments) {
+	const groups = new NodeMap<string, Group>(ul(), (a, b) => stringSort(a.group, b.group)),
+	      treatmentName = input({"type": "text"}),
+	      treatmentPrice = input({"type": "number", "step": "0.01", "min": 0}),
+	      treatmentDescription = textarea(),
+	      treatmentDuration = input({"type": "number", "step": 1, "min": 1, "value": 1}),
+	      submitTreatment = button({"onclick": function(this: HTMLButtonElement) {
+	      }}, "Create Treatment"),
+	      setTreatment = (treatment?: Treatment) => {
+		      amendNode(treatmentName, {"value": treatment?.name ?? ""});
+		      amendNode(treatmentPrice, {"value": (treatment?.price ?? 0) / 100});
+		      amendNode(treatmentDescription, {"value": treatment?.description ?? ""});
+		      amendNode(treatmentDuration, {"value": treatment?.duration ?? 1});
+		      setPage("setTreatment");
+	      };
+	for (const [_id, name, group, price, description, duration]  of treatments) {
 		if (!groups.has(group)) {
 			const arr = new NodeArray<Treatment, HTMLUListElement>(ul(), treatmentSort);
 			groups.set(group, {
@@ -31,10 +48,27 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 		}
 		groups.get(group)?.arr.push({
 			name, 
+			price,
+			description,
+			duration,
 			[node]: li(name)
 		});
 	}
-	amendNode(contents, groups[node]);
+	amendNode(contents, [
+		button({"onclick": () => setTreatment()}, "New Treatment"),
+		groups[node]
+	]);
+	registerPage("setTreatment", "", div([
+		labels("Treatment Name: ", treatmentName),
+		br(),
+		labels("Treatment Price (£): ", treatmentPrice),
+		br(),
+		labels("Treatment Description: ", treatmentDescription),
+		br(),
+		labels("Treatment Duration (m): ", treatmentDuration),
+		br(),
+		submitTreatment
+	]));
 }));
 
 registerPage("treatments", "Edit Treatments", contents);
