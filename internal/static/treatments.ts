@@ -52,7 +52,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 			      };
 			(t.id === -1 ? rpc.addTreatment(t.name, "", t.price, t.description, t.duration).then(id => t.id = id) : rpc.setTreatment(t.id, t.name, "", t.price, t.description, t.duration)).then(() => currTreatment = t);
 		}
-	      }}, "Create Treatment"),
+	      }}),
 	      noTreatment = {
 		"id": -1,
 		"name": "",
