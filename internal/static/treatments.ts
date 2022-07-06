@@ -59,7 +59,9 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 			(t.id === -1 ? rpc.addTreatment(t.name, t.group, t.price, t.description, t.duration).then(id => {
 				t.id = id;
 				addTreatment(t);
-			}) : rpc.setTreatment(t.id, t.name, t.group, t.price, t.description, t.duration)).then(() => currTreatment = t).then(() => setPage("treatments"));
+			}) : rpc.setTreatment(t.id, t.name, t.group, t.price, t.description, t.duration)).then(() => currTreatment = t)
+			.then(() => setPage("treatments"))
+			.catch(err => alert("Error: " + err));
 		}
 	      }}),
 	      noTreatment = {
