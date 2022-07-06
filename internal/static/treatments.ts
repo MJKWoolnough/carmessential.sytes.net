@@ -56,12 +56,14 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 				"description": treatmentDescription.value,
 				"duration": parseInt(treatmentDuration.value)
 			      };
+			amendNode(submitTreatment, {"disabled": true});
 			(t.id === -1 ? rpc.addTreatment(t.name, t.group, t.price, t.description, t.duration).then(id => {
 				t.id = id;
 				addTreatment(t);
 			}) : rpc.setTreatment(t.id, t.name, t.group, t.price, t.description, t.duration)).then(() => currTreatment = t)
 			.then(() => setPage("treatments"))
-			.catch(err => alert("Error: " + err));
+			.catch(err => alert("Error: " + err))
+			.finally(() => amendNode(submitTreatment, {"disabled": false}));
 		}
 	      }}),
 	      noTreatment = {
