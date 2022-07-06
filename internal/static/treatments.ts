@@ -1,4 +1,4 @@
-import {amendNode} from './lib/dom.js';
+import {amendNode, clearNode} from './lib/dom.js';
 import {br, button, div, input, li, textarea, ul} from './lib/html.js';
 import {NodeArray, NodeMap, node, stringSort} from './lib/nodes.js';
 import {registerPage, setPage} from './pages.js';
@@ -65,6 +65,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 		 treatmentDescription.value = treatment.description;
 		 treatmentDuration.value = treatment.duration + "";
 		 currTreatment = treatment;
+		 clearNode(submitTreatment, treatment.id === -1 ? "Create Treatment" : "Edit Treatment");
 		 setPage("setTreatment");
 	      };
 	let currTreatment: Treatment = noTreatment;
