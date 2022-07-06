@@ -1,5 +1,5 @@
 import {amendNode, clearNode} from './lib/dom.js';
-import {br, button, div, h1, input, li, textarea, ul} from './lib/html.js';
+import {br, button, datalist, div, h1, input, li, option, textarea, ul} from './lib/html.js';
 import {NodeArray, NodeMap, node, stringSort} from './lib/nodes.js';
 import {registerPage, setPage} from './pages.js';
 import {labels} from './shared.js';
@@ -29,9 +29,10 @@ const treatmentSort = (a: Treatment, b: Treatment) => stringSort(a.name, b.name)
 
 ready.then(() => rpc.listTreatments().then(treatments => {
 	const groups = new NodeMap<string, Group>(ul(), (a, b) => stringSort(a.group, b.group)),
+	      groupList = datalist({"id": "groupNames"}),
 	      treatmentTitle = h1(),
 	      treatmentName = input({"type": "text"}),
-	      treatmentGroup = input({"type": "text"}),
+	      treatmentGroup = input({"type": "text", "list": "groupNames"}),
 	      treatmentPrice = input({"type": "number", "step": "0.01", "min": 0}),
 	      treatmentDescription = textarea(),
 	      treatmentDuration = input({"type": "number", "step": 1, "min": 1, "value": 1}),
@@ -83,6 +84,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 	      addTreatment = (treatment: Treatment) => {
 		if (!groups.has(treatment.group)) {
 			const arr = new NodeArray<TreatmentNode, HTMLUListElement>(ul(), treatmentSort);
+			amendNode(groupList, option({"value": treatment.group}));
 			groups.set(treatment.group, {
 				arr,
 				"group": treatment.group,
@@ -105,6 +107,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 		treatmentTitle,
 		labels("Treatment Name: ", treatmentName),
 		br(),
+		groupList,
 		labels("Treatment Group: ", treatmentGroup),
 		br(),
 		labels("Treatment Price (£): ", treatmentPrice),
