@@ -55,7 +55,10 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 				"description": treatmentDescription.value,
 				"duration": parseInt(treatmentDuration.value)
 			      };
-			(t.id === -1 ? rpc.addTreatment(t.name, t.group, t.price, t.description, t.duration).then(id => t.id = id) : rpc.setTreatment(t.id, t.name, t.group, t.price, t.description, t.duration)).then(() => currTreatment = t);
+			(t.id === -1 ? rpc.addTreatment(t.name, t.group, t.price, t.description, t.duration).then(id => {
+				t.id = id;
+				addTreatment(t);
+			}) : rpc.setTreatment(t.id, t.name, t.group, t.price, t.description, t.duration)).then(() => currTreatment = t);
 		}
 	      }}),
 	      noTreatment = {
@@ -76,26 +79,23 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 		 clearNode(treatmentTitle, treatment.id === -1 ? "Create Treatment" : "Edit Treatment");
 		 clearNode(submitTreatment, treatment.id === -1 ? "Create Treatment" : "Edit Treatment");
 		 setPage("setTreatment");
-	      };
-	let currTreatment: Treatment = noTreatment;
-	for (const [id, name, group, price, description, duration]  of treatments) {
-		if (!groups.has(group)) {
+	      },
+	      addTreatment = (treatment: Treatment) => {
+		if (!groups.has(treatment.group)) {
 			const arr = new NodeArray<TreatmentNode, HTMLUListElement>(ul(), treatmentSort);
-			groups.set(group, {
+			groups.set(treatment.group, {
 				arr,
-				group,
+				"group": treatment.group,
 				[node]: arr[node]
 			});
 		}
-		groups.get(group)?.arr.push({
-			id,
-			name, 
-			group,
-			price,
-			description,
-			duration,
-			[node]: li(name)
-		});
+		groups.get(treatment.group)?.arr.push(Object.assign(treatment, {
+			[node]: li(treatment.name)
+		}));
+	      };
+	let currTreatment: Treatment = noTreatment;
+	for (const [id, name, group, price, description, duration]  of treatments) {
+		addTreatment({id, name, group, price, description, duration});
 	}
 	amendNode(contents, [
 		button({"onclick": () => setTreatment()}, "New Treatment"),
