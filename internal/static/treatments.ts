@@ -8,6 +8,7 @@ import {ready, rpc} from './rpc.js';
 type Treatment = {
 	id: number;
 	name: string;
+	group: string;
 	price: number;
 	description: string;
 	duration: number;
@@ -30,12 +31,15 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 	const groups = new NodeMap<string, Group>(ul(), (a, b) => stringSort(a.group, b.group)),
 	      treatmentTitle = h1(),
 	      treatmentName = input({"type": "text"}),
+	      treatmentGroup = input({"type": "text"}),
 	      treatmentPrice = input({"type": "number", "step": "0.01", "min": 0}),
 	      treatmentDescription = textarea(),
 	      treatmentDuration = input({"type": "number", "step": 1, "min": 1, "value": 1}),
 	      submitTreatment = button({"onclick": function(this: HTMLButtonElement) {
 		if (!treatmentName.value) {
 			alert("Need a Name");
+		} else if (!treatmentGroup.value) {
+			alert("Need a Group");
 		} else if (!treatmentPrice.value) {
 			alert("Need a Price");
 		} else if (!treatmentDescription.value) {
@@ -46,22 +50,25 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 			const t: Treatment = {
 				"id": currTreatment.id,
 				"name": treatmentName.value,
+				"group": treatmentGroup.value,
 				"price": Math.floor(parseFloat(treatmentPrice.value) * 100),
 				"description": treatmentDescription.value,
 				"duration": parseInt(treatmentDuration.value)
 			      };
-			(t.id === -1 ? rpc.addTreatment(t.name, "", t.price, t.description, t.duration).then(id => t.id = id) : rpc.setTreatment(t.id, t.name, "", t.price, t.description, t.duration)).then(() => currTreatment = t);
+			(t.id === -1 ? rpc.addTreatment(t.name, t.group, t.price, t.description, t.duration).then(id => t.id = id) : rpc.setTreatment(t.id, t.name, t.group, t.price, t.description, t.duration)).then(() => currTreatment = t);
 		}
 	      }}),
 	      noTreatment = {
 		"id": -1,
 		"name": "",
+		"group": "",
 		"price": 0,
 		"description": "",
 		"duration": 1
 	      },
 	      setTreatment = (treatment: Treatment = noTreatment) => {
 		 treatmentName.value = treatment.name;
+		 treatmentGroup.value = treatment.group;
 		 treatmentPrice.value = (treatment.price / 100) + "";
 		 treatmentDescription.value = treatment.description;
 		 treatmentDuration.value = treatment.duration + "";
@@ -83,6 +90,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 		groups.get(group)?.arr.push({
 			id,
 			name, 
+			group,
 			price,
 			description,
 			duration,
@@ -97,6 +105,8 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 		treatmentTitle,
 		labels("Treatment Name: ", treatmentName),
 		br(),
+		labels("Treatment Group: ", treatmentGroup),
+		br(),
 		labels("Treatment Price (£): ", treatmentPrice),
 		br(),
 		labels("Treatment Description: ", treatmentDescription),
@@ -105,7 +115,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 		br(),
 		submitTreatment
 	]), () => {
-		if (currTreatment.name !== treatmentName.value || currTreatment.price !== parseFloat(treatmentPrice.value) * 100 || currTreatment.description !== treatmentDescription.value || currTreatment.duration !== parseInt(treatmentDuration.value)) {
+		if (currTreatment.name !== treatmentName.value || currTreatment.group !== treatmentGroup.value || currTreatment.price !== parseFloat(treatmentPrice.value) * 100 || currTreatment.description !== treatmentDescription.value || currTreatment.duration !== parseInt(treatmentDuration.value)) {
 			if (!confirm("There are unsaved changes, are you sure you wish to change page?")) {
 				return Promise.reject();
 			}
