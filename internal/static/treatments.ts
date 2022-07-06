@@ -1,5 +1,5 @@
 import {amendNode, clearNode} from './lib/dom.js';
-import {br, button, div, input, li, textarea, ul} from './lib/html.js';
+import {br, button, div, h1, input, li, textarea, ul} from './lib/html.js';
 import {NodeArray, NodeMap, node, stringSort} from './lib/nodes.js';
 import {registerPage, setPage} from './pages.js';
 import {labels} from './shared.js';
@@ -28,6 +28,7 @@ const treatmentSort = (a: Treatment, b: Treatment) => stringSort(a.name, b.name)
 
 ready.then(() => rpc.listTreatments().then(treatments => {
 	const groups = new NodeMap<string, Group>(ul(), (a, b) => stringSort(a.group, b.group)),
+	      treatmentTitle = h1(),
 	      treatmentName = input({"type": "text"}),
 	      treatmentPrice = input({"type": "number", "step": "0.01", "min": 0}),
 	      treatmentDescription = textarea(),
@@ -65,6 +66,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 		 treatmentDescription.value = treatment.description;
 		 treatmentDuration.value = treatment.duration + "";
 		 currTreatment = treatment;
+		 clearNode(treatmentTitle, treatment.id === -1 ? "Create Treatment" : "Edit Treatment");
 		 clearNode(submitTreatment, treatment.id === -1 ? "Create Treatment" : "Edit Treatment");
 		 setPage("setTreatment");
 	      };
@@ -92,6 +94,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 		groups[node]
 	]);
 	registerPage("setTreatment", "", div([
+		treatmentTitle,
 		labels("Treatment Name: ", treatmentName),
 		br(),
 		labels("Treatment Price (£): ", treatmentPrice),
