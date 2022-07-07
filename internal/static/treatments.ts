@@ -127,6 +127,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 				group.mp.delete(id);
 				if (groups.size) {
 					groups.delete(gid);
+					groupList.delete(gid);
 				}
 			}
 	      },
