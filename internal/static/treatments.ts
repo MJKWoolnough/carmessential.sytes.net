@@ -20,7 +20,18 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 		constructor(id = -1, name = "", group = "", price = 0, description = "", duration = 1) {
 			this.#id = id;
 			this[node] = li([
-				this.#nameSpan = span(this.#name = name)
+				this.#nameSpan = span(this.#name = name),
+				button({"onclick": () => {
+					if (confirm("Are you sure you wish to remove this treatment?")) {
+						const group = groups.get(this.#group);
+						if (group) {
+							group.mp.delete(this.#id);
+							if (groups.size) {
+								groups.delete(this.#group);
+							}
+						}
+					}
+				}}, "Remove")
 			]);
 			this.#group = group;
 			this.#price = price;
