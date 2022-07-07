@@ -23,7 +23,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 				this.#nameSpan = span(this.#name = name),
 				button({"onclick": () => {
 					if (confirm("Are you sure you wish to remove this treatment?")) {
-						removeTreatmentFromGroup(this.#group, this.#id);
+						removeTreatmentFromGroup(this);
 					}
 				}}, "Remove")
 			]);
@@ -49,7 +49,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 		}
 		set group(g: string) {
 			if (this.#group !== g) {
-				removeTreatmentFromGroup(this.#group, this.#id);
+				removeTreatmentFromGroup(this);
 				getGroup(this.#group = g).mp.set(this.#id, this);
 			}
 		}
@@ -121,13 +121,13 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 		}
 		return g;
 	      },
-	      removeTreatmentFromGroup = (gid: string, id: number) => {
-			const group = groups.get(gid);
+	      removeTreatmentFromGroup = (t: Treatment) => {
+			const group = groups.get(t.group);
 			if (group) {
-				group.mp.delete(id);
+				group.mp.delete(t.id);
 				if (groups.size) {
-					groups.delete(gid);
-					groupList.delete(gid);
+					groups.delete(t.group);
+					groupList.delete(t.group);
 				}
 			}
 	      },
