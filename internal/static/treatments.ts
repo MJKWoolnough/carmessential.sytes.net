@@ -5,62 +5,62 @@ import {registerPage, setPage} from './pages.js';
 import {labels} from './shared.js';
 import {ready, rpc} from './rpc.js';
 
-class Treatment {
-	#id: number;
-	#name: string;
-	#nameSpan: HTMLSpanElement;
-	#group: string;
-	#price: number;
-	#description: string;
-	#duration: number;
-	[node]: HTMLLIElement;
-	constructor(id = -1, name = "", group = "", price = 0, description = "", duration = 1) {
-		this.#id = id;
-		this[node] = li([
-			this.#nameSpan = span(this.#name = name)
-		]);
-		this.#group = group;
-		this.#price = price;
-		this.#description = description;
-		this.#duration = duration;
-	}
-	get id() {
-		return this.#id;
-	}
-	set id(i: number) {
-		this.#id = i;
-	}
-	get name() {
-		return this.#name;
-	}
-	set name(n: string) {
-		clearNode(this.#nameSpan, this.#name = n);
-	}
-	get group() {
-		return this.#group;
-	}
-	get price() {
-		return this.#price;
-	}
-	get description() {
-		return this.#description;
-	}
-	get duration() {
-		return this.#duration;
-	}
-}
-
-type Group = {
-	group: string;
-	mp: NodeMap<number, Treatment, HTMLUListElement>;
-	[node]: HTMLUListElement;
-}
-
-const treatmentSort = (a: Treatment, b: Treatment) => stringSort(a.name, b.name),
-      contents = div();
+const contents = div();
 
 ready.then(() => rpc.listTreatments().then(treatments => {
-	const groups = new NodeMap<string, Group>(ul(), (a, b) => stringSort(a.group, b.group)),
+	class Treatment {
+		#id: number;
+		#name: string;
+		#nameSpan: HTMLSpanElement;
+		#group: string;
+		#price: number;
+		#description: string;
+		#duration: number;
+		[node]: HTMLLIElement;
+		constructor(id = -1, name = "", group = "", price = 0, description = "", duration = 1) {
+			this.#id = id;
+			this[node] = li([
+				this.#nameSpan = span(this.#name = name)
+			]);
+			this.#group = group;
+			this.#price = price;
+			this.#description = description;
+			this.#duration = duration;
+		}
+		get id() {
+			return this.#id;
+		}
+		set id(i: number) {
+			this.#id = i;
+		}
+		get name() {
+			return this.#name;
+		}
+		set name(n: string) {
+			clearNode(this.#nameSpan, this.#name = n);
+		}
+		get group() {
+			return this.#group;
+		}
+		get price() {
+			return this.#price;
+		}
+		get description() {
+			return this.#description;
+		}
+		get duration() {
+			return this.#duration;
+		}
+	}
+
+	type Group = {
+		group: string;
+		mp: NodeMap<number, Treatment, HTMLUListElement>;
+		[node]: HTMLUListElement;
+	}
+
+	const treatmentSort = (a: Treatment, b: Treatment) => stringSort(a.name, b.name),
+	      groups = new NodeMap<string, Group>(ul(), (a, b) => stringSort(a.group, b.group)),
 	      groupList = datalist({"id": "groupNames"}),
 	      treatmentTitle = h1(),
 	      treatmentName = input({"type": "text"}),
