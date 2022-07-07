@@ -50,13 +50,9 @@ class Treatment {
 	}
 }
 
-type TreatmentNode = Treatment & {
-	[node]: HTMLLIElement;
-}
-
 type Group = {
 	group: string;
-	mp: NodeMap<number, TreatmentNode, HTMLUListElement>;
+	mp: NodeMap<number, Treatment, HTMLUListElement>;
 	[node]: HTMLUListElement;
 }
 
@@ -109,7 +105,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 	      },
 	      addTreatment = (treatment: Treatment) => {
 		if (!groups.has(treatment.group)) {
-			const mp = new NodeMap<number, TreatmentNode, HTMLUListElement>(ul(), treatmentSort);
+			const mp = new NodeMap<number, Treatment, HTMLUListElement>(ul(), treatmentSort);
 			amendNode(groupList, option({"value": treatment.group}));
 			groups.set(treatment.group, {
 				mp,
