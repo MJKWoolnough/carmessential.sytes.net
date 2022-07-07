@@ -13,9 +13,9 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 		#name: string;
 		#nameSpan: HTMLSpanElement;
 		#group: string;
-		#price: number;
-		#description: string;
-		#duration: number;
+		price: number;
+		description: string;
+		duration: number;
 		[node]: HTMLLIElement;
 		constructor(id = -1, name = "", group = "", price = 0, description = "", duration = 1) {
 			this.#id = id;
@@ -34,9 +34,9 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 				}}, "Remove")
 			]);
 			this.#group = group;
-			this.#price = price;
-			this.#description = description;
-			this.#duration = duration;
+			this.price = price;
+			this.description = description;
+			this.duration = duration;
 		}
 		get id() {
 			return this.#id;
@@ -53,14 +53,17 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 		get group() {
 			return this.#group;
 		}
-		get price() {
-			return this.#price;
-		}
-		get description() {
-			return this.#description;
-		}
-		get duration() {
-			return this.#duration;
+		set group(g: string) {
+			if (this.#group !== g) {
+				const group = groups.get(this.#group);
+				if (group) {
+					group.mp.delete(this.#id);
+					if (groups.size) {
+						groups.delete(this.#group);
+					}
+				}
+				getGroup(this.#group = g).mp.set(this.#id, this);
+			}
 		}
 	}
 
@@ -94,10 +97,13 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 			const price = Math.floor(parseFloat(treatmentPrice.value) * 100),
 			      duration = parseInt(treatmentDuration.value);
 			amendNode(submitTreatment, {"disabled": true});
-			(currTreatment.id === -1 ? rpc.addTreatment(treatmentName.value, treatmentGroup.value, price, treatmentDescription.value, duration).then(id => {
-				currTreatment.id = id;
-				addTreatment(currTreatment);
-			}) : rpc.setTreatment(currTreatment.id, treatmentName.value, treatmentGroup.value, price, treatmentDescription.value, duration))
+			(currTreatment.id === -1 ? rpc.addTreatment(treatmentName.value, treatmentGroup.value, price, treatmentDescription.value, duration).then(id => addTreatment(currTreatment = new Treatment(id, treatmentName.value, treatmentGroup.value, price, treatmentDescription.value, duration))) : rpc.setTreatment(currTreatment.id, treatmentName.value, treatmentGroup.value, price, treatmentDescription.value, duration).then(() => {
+				currTreatment.name = treatmentName.value;
+				currTreatment.group = treatmentGroup.value;
+				currTreatment.price = price;
+				currTreatment.description = treatmentDescription.value;
+				currTreatment.duration = duration;
+			}))
 			.then(() => setPage("treatments"))
 			.catch(err => alert("Error: " + err))
 			.finally(() => amendNode(submitTreatment, {"disabled": false}));
@@ -114,17 +120,21 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 		 clearNode(submitTreatment, treatment.id === -1 ? "Create Treatment" : "Edit Treatment");
 		 setPage("setTreatment");
 	      },
-	      addTreatment = (treatment: Treatment) => {
-		if (!groups.has(treatment.group)) {
+	      getGroup = (group: string) => {
+		let g = groups.get(group);
+		if (!g) {
 			const mp = new NodeMap<number, Treatment, HTMLUListElement>(ul(), treatmentSort);
-			amendNode(groupList, option({"value": treatment.group}));
-			groups.set(treatment.group, {
+			amendNode(groupList, option({"value": group}));
+			groups.set(group, g = {
 				mp,
-				"group": treatment.group,
+				"group": group,
 				[node]: mp[node]
 			});
 		}
-		groups.get(treatment.group)?.mp.set(treatment.id, treatment);
+		return g;
+	      },
+	      addTreatment = (treatment: Treatment) => {
+		getGroup(treatment.group).mp.set(treatment.id, treatment);
 	      };
 	let currTreatment: Treatment;
 	for (const [id, name, group, price, description, duration]  of treatments) {
