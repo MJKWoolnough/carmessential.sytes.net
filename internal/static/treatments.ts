@@ -1,17 +1,53 @@
 import {amendNode, clearNode} from './lib/dom.js';
-import {br, button, datalist, div, h1, input, li, option, textarea, ul} from './lib/html.js';
+import {br, button, datalist, div, h1, input, li, option, span, textarea, ul} from './lib/html.js';
 import {NodeArray, NodeMap, node, stringSort} from './lib/nodes.js';
 import {registerPage, setPage} from './pages.js';
 import {labels} from './shared.js';
 import {ready, rpc} from './rpc.js';
 
-type Treatment = {
-	id: number;
-	name: string;
-	group: string;
-	price: number;
-	description: string;
-	duration: number;
+class Treatment {
+	#id: number;
+	#name: string;
+	#nameSpan: HTMLSpanElement;
+	#group: string;
+	#price: number;
+	#description: string;
+	#duration: number;
+	[node]: HTMLLIElement;
+	constructor(id = -1, name = "", group = "", price = 0, description = "", duration = 1) {
+		this.#id = id;
+		this[node] = li([
+			this.#nameSpan = span(this.#name = name)
+		]);
+		this.#group = group;
+		this.#price = price;
+		this.#description = description;
+		this.#duration = duration;
+	}
+	get id() {
+		return this.#id;
+	}
+	set id(i: number) {
+		this.#id = i;
+	}
+	get name() {
+		return this.#name;
+	}
+	set name(n: string) {
+		clearNode(this.#nameSpan, this.#name = n);
+	}
+	get group() {
+		return this.#group;
+	}
+	get price() {
+		return this.#price;
+	}
+	get description() {
+		return this.#description;
+	}
+	get duration() {
+		return this.#duration;
+	}
 }
 
 type TreatmentNode = Treatment & {
@@ -48,36 +84,19 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 		} else if (!treatmentDuration.value) {
 			alert("Need a Duration");
 		} else {
-			const t: Treatment = {
-				"id": currTreatment.id,
-				"name": treatmentName.value,
-				"group": treatmentGroup.value,
-				"price": Math.floor(parseFloat(treatmentPrice.value) * 100),
-				"description": treatmentDescription.value,
-				"duration": parseInt(treatmentDuration.value)
-			      };
+			const price = Math.floor(parseFloat(treatmentPrice.value) * 100),
+			      duration = parseInt(treatmentDuration.value);
 			amendNode(submitTreatment, {"disabled": true});
-			(t.id === -1 ? rpc.addTreatment(t.name, t.group, t.price, t.description, t.duration).then(id => {
-				t.id = id;
-				addTreatment(t);
-			}) : rpc.setTreatment(t.id, t.name, t.group, t.price, t.description, t.duration))
-			.then(() => {
-				currTreatment = t;
-			        setPage("treatments");
-			})
+			(currTreatment.id === -1 ? rpc.addTreatment(treatmentName.value, treatmentGroup.value, price, treatmentDescription.value, duration).then(id => {
+				currTreatment.id = id;
+				addTreatment(currTreatment);
+			}) : rpc.setTreatment(currTreatment.id, treatmentName.value, treatmentGroup.value, price, treatmentDescription.value, duration))
+			.then(() => setPage("treatments"))
 			.catch(err => alert("Error: " + err))
 			.finally(() => amendNode(submitTreatment, {"disabled": false}));
 		}
 	      }}),
-	      noTreatment = {
-		"id": -1,
-		"name": "",
-		"group": "",
-		"price": 0,
-		"description": "",
-		"duration": 1
-	      },
-	      setTreatment = (treatment: Treatment = noTreatment) => {
+	      setTreatment = (treatment: Treatment) => {
 		 treatmentName.value = treatment.name;
 		 treatmentGroup.value = treatment.group;
 		 treatmentPrice.value = (treatment.price / 100) + "";
@@ -98,16 +117,14 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 				[node]: arr[node]
 			});
 		}
-		groups.get(treatment.group)?.arr.push(Object.assign(treatment, {
-			[node]: li(treatment.name)
-		}));
+		groups.get(treatment.group)?.arr.push(treatment);
 	      };
-	let currTreatment: Treatment = noTreatment;
+	let currTreatment: Treatment;
 	for (const [id, name, group, price, description, duration]  of treatments) {
-		addTreatment({id, name, group, price, description, duration});
+		addTreatment(new Treatment(id, name, group, price, description, duration));
 	}
 	amendNode(contents, [
-		button({"onclick": () => setTreatment()}, "New Treatment"),
+		button({"onclick": () => setTreatment(new Treatment())}, "New Treatment"),
 		groups[node]
 	]);
 	registerPage("setTreatment", "", div([
