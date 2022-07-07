@@ -1,6 +1,6 @@
 import {amendNode, clearNode} from './lib/dom.js';
 import {br, button, datalist, div, h1, input, li, option, span, textarea, ul} from './lib/html.js';
-import {NodeArray, NodeMap, node, stringSort} from './lib/nodes.js';
+import {NodeMap, node, stringSort} from './lib/nodes.js';
 import {registerPage, setPage} from './pages.js';
 import {labels} from './shared.js';
 import {ready, rpc} from './rpc.js';
@@ -56,7 +56,7 @@ type TreatmentNode = Treatment & {
 
 type Group = {
 	group: string;
-	arr: NodeArray<TreatmentNode, HTMLUListElement>;
+	mp: NodeMap<number, TreatmentNode, HTMLUListElement>;
 	[node]: HTMLUListElement;
 }
 
@@ -109,15 +109,15 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 	      },
 	      addTreatment = (treatment: Treatment) => {
 		if (!groups.has(treatment.group)) {
-			const arr = new NodeArray<TreatmentNode, HTMLUListElement>(ul(), treatmentSort);
+			const mp = new NodeMap<number, TreatmentNode, HTMLUListElement>(ul(), treatmentSort);
 			amendNode(groupList, option({"value": treatment.group}));
 			groups.set(treatment.group, {
-				arr,
+				mp,
 				"group": treatment.group,
-				[node]: arr[node]
+				[node]: mp[node]
 			});
 		}
-		groups.get(treatment.group)?.arr.push(treatment);
+		groups.get(treatment.group)?.mp.set(treatment.id, treatment);
 	      };
 	let currTreatment: Treatment;
 	for (const [id, name, group, price, description, duration]  of treatments) {
