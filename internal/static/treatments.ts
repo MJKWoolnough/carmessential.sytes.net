@@ -75,7 +75,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 
 	const treatmentSort = (a: Treatment, b: Treatment) => stringSort(a.name, b.name),
 	      groups = new NodeMap<string, Group>(ul(), (a, b) => stringSort(a.group, b.group)),
-	      groupList = datalist({"id": "groupNames"}),
+	      groupList = new NodeMap<string, {"id": string; [node]: HTMLOptionElement}, HTMLDataListElement>(datalist({"id": "groupNames"})),
 	      treatmentTitle = h1(),
 	      treatmentName = input({"type": "text"}),
 	      treatmentGroup = input({"type": "text", "list": "groupNames"}),
@@ -124,7 +124,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 		let g = groups.get(group);
 		if (!g) {
 			const mp = new NodeMap<number, Treatment, HTMLUListElement>(ul(), treatmentSort);
-			amendNode(groupList, option({"value": group}));
+			groupList.set(group, {"id": group, [node]: option({"value": group})});
 			groups.set(group, g = {
 				mp,
 				"group": group,
@@ -148,7 +148,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 		treatmentTitle,
 		labels("Treatment Name: ", treatmentName),
 		br(),
-		groupList,
+		groupList[node],
 		labels("Treatment Group: ", treatmentGroup),
 		br(),
 		labels("Treatment Price (£): ", treatmentPrice),
