@@ -159,10 +159,10 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 	]), () => {
 		if (currTreatment.name !== treatmentName.value || currTreatment.group !== treatmentGroup.value || currTreatment.price !== parseFloat(treatmentPrice.value) * 100 || currTreatment.description !== treatmentDescription.value || currTreatment.duration !== parseInt(treatmentDuration.value)) {
 			if (!confirm("There are unsaved changes, are you sure you wish to change page?")) {
-				return Promise.reject();
+				return false;
 			}
 		}
-		return Promise.resolve();
+		return true;
 	});
 }));
 
