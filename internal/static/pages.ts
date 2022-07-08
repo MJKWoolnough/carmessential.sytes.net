@@ -47,14 +47,12 @@ export const setHeaderFooter = (h: string, f: string) => {
 	document.title = "Admin";
 	amendNode(document.head, style({"type": "text/css"}, css));
 },
-registerPage = (id: string, title: string, contents: HTMLElement, onchange?: () => Promise<void>) => {
-	pages.set(id, {
-		id,
-		contents,
-		fn: onchange,
-		[node]: title ? li({"onclick": () => setPage(id)}, title) : document.createComment("")
-	});
-},
+registerPage = (id: string, title: string, contents: HTMLElement, onchange?: () => Promise<void>) => pages.set(id, {
+	id,
+	contents,
+	fn: onchange,
+	[node]: title ? li({"onclick": () => setPage(id)}, title) : document.createComment("")
+}),
 addCSS = (style: string) => {
 	css += style;
 },
