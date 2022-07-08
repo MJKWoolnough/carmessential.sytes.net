@@ -132,9 +132,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 				}
 			}
 	      },
-	      addTreatment = (treatment: Treatment) => {
-		getGroup(treatment.group).mp.set(treatment.id, treatment);
-	      };
+	      addTreatment = (treatment: Treatment) => getGroup(treatment.group).mp.set(treatment.id, treatment);
 	let currTreatment: Treatment;
 	for (const [id, name, group, price, description, duration]  of treatments) {
 		addTreatment(new Treatment(id, name, group, price, description, duration));
