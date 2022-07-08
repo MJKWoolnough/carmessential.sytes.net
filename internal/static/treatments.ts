@@ -117,7 +117,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 			groupList.set(group, {"id": group, [node]: option({"value": group})});
 			groups.set(group, g = {
 				mp,
-				"group": group,
+				group,
 				[node]: mp[node]
 			});
 		}
