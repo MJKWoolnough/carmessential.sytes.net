@@ -21,6 +21,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 			this.#id = id;
 			this[node] = li([
 				this.#nameSpan = span(this.#name = name),
+				button({"onclick": () => setTreatment(this)}, "Edit"),
 				button({"onclick": () => {
 					if (confirm("Are you sure you wish to remove this treatment?")) {
 						removeTreatmentFromGroup(this);
