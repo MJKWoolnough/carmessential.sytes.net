@@ -105,8 +105,9 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 		treatmentDescription.value = treatment.description;
 		treatmentDuration.value = treatment.duration + "";
 		currTreatment = treatment;
-		clearNode(treatmentTitle, treatment.id === -1 ? "Create Treatment" : "Edit Treatment");
-		clearNode(submitTreatment, treatment.id === -1 ? "Create Treatment" : "Edit Treatment");
+		const title = treatment.id === -1 ? "Create Treatment" : "Edit Treatment";
+		clearNode(treatmentTitle, title);
+		clearNode(submitTreatment, title);
 		setPage("setTreatment");
 	      },
 	      getGroup = (group: string) => {
