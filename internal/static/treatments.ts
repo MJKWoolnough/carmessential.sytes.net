@@ -99,15 +99,15 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 		}
 	      }}),
 	      setTreatment = (treatment: Treatment) => {
-		 treatmentName.value = treatment.name;
-		 treatmentGroup.value = treatment.group;
-		 treatmentPrice.value = (treatment.price / 100) + "";
-		 treatmentDescription.value = treatment.description;
-		 treatmentDuration.value = treatment.duration + "";
-		 currTreatment = treatment;
-		 clearNode(treatmentTitle, treatment.id === -1 ? "Create Treatment" : "Edit Treatment");
-		 clearNode(submitTreatment, treatment.id === -1 ? "Create Treatment" : "Edit Treatment");
-		 setPage("setTreatment");
+		treatmentName.value = treatment.name;
+		treatmentGroup.value = treatment.group;
+		treatmentPrice.value = (treatment.price / 100) + "";
+		treatmentDescription.value = treatment.description;
+		treatmentDuration.value = treatment.duration + "";
+		currTreatment = treatment;
+		clearNode(treatmentTitle, treatment.id === -1 ? "Create Treatment" : "Edit Treatment");
+		clearNode(submitTreatment, treatment.id === -1 ? "Create Treatment" : "Edit Treatment");
+		setPage("setTreatment");
 	      },
 	      getGroup = (group: string) => {
 		let g = groups.get(group);
