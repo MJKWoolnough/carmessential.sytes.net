@@ -6,7 +6,7 @@ import {ready} from './rpc.js';
 type Page = {
 	id: string;
 	contents: HTMLElement;
-	fn?: () => Promise<void>;
+	fn?: () => boolean;
 	[node]: HTMLLIElement | Comment;
 }
 
@@ -47,7 +47,7 @@ export const setHeaderFooter = (h: string, f: string) => {
 	document.title = "Admin";
 	amendNode(document.head, style({"type": "text/css"}, css));
 },
-registerPage = (id: string, title: string, contents: HTMLElement, onchange?: () => Promise<void>) => pages.set(id, {
+registerPage = (id: string, title: string, contents: HTMLElement, onchange?: () => boolean) => pages.set(id, {
 	id,
 	contents,
 	fn: onchange,
@@ -59,11 +59,9 @@ addCSS = (style: string) => {
 setPage = (id: string) => {
 	if (currPage !== id) {
 		const page = pages.get(id);
-		if (page) {
-			(pages.get(currPage)?.fn?.() ?? Promise.resolve()).then(() => {
-				clearNode(section, page.contents);
-				currPage = id;
-			});
+		if (page && (pages.get(currPage)?.fn?.() ?? true)) {
+			clearNode(section, page.contents);
+			currPage = id;
 		};
 	}
 };
