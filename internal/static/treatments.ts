@@ -2,8 +2,8 @@ import {amendNode, clearNode} from './lib/dom.js';
 import {br, button, datalist, div, h1, input, li, option, span, textarea, ul} from './lib/html.js';
 import {NodeMap, node, stringSort} from './lib/nodes.js';
 import {registerPage, setPage} from './pages.js';
-import {labels} from './shared.js';
 import {ready, rpc} from './rpc.js';
+import {labels} from './shared.js';
 
 const contents = div();
 
