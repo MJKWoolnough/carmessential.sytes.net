@@ -1,4 +1,4 @@
-import type {RPCType} from './types.js';
+import type {Booking, RPCType} from './types.js';
 import {WS} from './lib/conn.js';
 import {RPC} from './lib/rpc.js';
 import {setHeaderFooter} from './pages.js';
@@ -16,7 +16,13 @@ ready = pageLoad.then(() => WS("/admin")).then(ws => {
 				"listTreatments": () => arpc.request("listTreatments"),
 				"addTreatment": (name: string, group: string, price: number, description: string, duration: number) => arpc.request("addTreatment", {name, group, price, description, duration}),
 				"setTreatment": (id: number, name: string, group: string, price: number, description: string, duration: number) => arpc.request("addTreatment", {id, name, group, price, description, duration}),
-				"removeTreatment": (id: number) => arpc.request("removeTreatment", id)
+				"removeTreatment": (id: number) => arpc.request("removeTreatment", id),
+				"getOrderTime": (id: number) => arpc.request("getOrderTime", id),
+				"addOrder": (bookings: Booking[]) => arpc.request("addOrder", bookings),
+				"removeOrder": (id: number) => arpc.request("removeOrder", id),
+				"listBookings": (start: number, end: number) => arpc.request("listBookings", [start, end]),
+				"updateBooking": (b: Booking) => arpc.request("updateBooking", b),
+				"removeBooking": (id: number) => arpc.request("removeBooking", id)
 			}));
 		});
 	});
