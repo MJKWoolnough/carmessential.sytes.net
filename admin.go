@@ -294,3 +294,53 @@ func adminInit() (*admin, error) {
 	}
 	return a, nil
 }
+
+const hex = "0123456789abcdef"
+
+func appendString(p []byte, s string) []byte {
+	last := 0
+	var char byte
+	p = append(p, '"')
+	for n, c := range s {
+		switch c {
+		case '"', '\\', '/':
+			char = byte(c)
+		case '\b':
+			char = 'b'
+		case '\f':
+			char = 'f'
+		case '\n':
+			char = 'n'
+		case '\r':
+			char = 'r'
+		case '\t':
+			char = 't'
+		default:
+			if c < 0x20 { // control characters
+				p = append(append(p, s[last:n]...), '\\', 'u', '0', '0', hex[c>>4], hex[c&0xf])
+				last = n + 1
+			}
+			continue
+		}
+		p = append(append(p, s[last:n]...), '\\', char)
+		last = n + 1
+	}
+	return append(append(p, s[last:]...), '"')
+}
+
+func appendNum(p []byte, n uint8) []byte {
+	if n >= 100 {
+		c := n / 100
+		n -= c * 100
+		p = append(p, '0'+c)
+		if n < 10 {
+			p = append(p, '0')
+		}
+	}
+	if n >= 10 {
+		c := n / 10
+		n -= c * 10
+		p = append(p, '0'+c)
+	}
+	return append(p, '0'+n)
+}
