@@ -56,6 +56,11 @@ const (
 	setTreatment
 	removeTreatment
 
+	orderTime
+	addOrder
+	removeOrder
+	removeOrderBookings
+
 	listBookings
 	addBooking
 	updateBooking
@@ -342,6 +347,13 @@ func adminInit() (*admin, error) {
 		"INSERT INTO [Treatments] ([Name], [Group], [Price], [Description], [Duration]) VALUES (?, ?, ?, ?, ?);",
 		"UPDATE [Treatments] SET [Name] = ?, [Group] = ?, [Price] = ?, [Description] = ?, [Duration] = ? WHERE [ID] = ?;",
 		"DELETE FROM [Treatments] WHERE [ID] = ?;",
+
+		// Orders
+
+		"SELECT [Time] FROM [Orders] WHERE [ID] = ?;",
+		"INSERT INTO [Orders] ([Time]) VALUES (?);",
+		"DELETE FROM [Orders] WHERE [ID] = ?;",
+		"DELETE FROM [Treatments] WHERE [OrderID] = ?;",
 
 		// Bookings
 
