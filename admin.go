@@ -13,6 +13,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -35,6 +36,18 @@ type treatment struct {
 	Duration    uint32 `json:"duration"`
 }
 
+type booking struct {
+	ID          uint64 `json:"id"`
+	Date        uint64 `json:"date"`
+	BlockNum    uint8  `json:"blockNum"`
+	TotalBlocks uint8  `json:"totalBlock"`
+	TreatmentID uint64 `json:"treatmentID"`
+	Name        string `json:"name"`
+	Email       string `json:"emailAddress"`
+	Phone       string `json:"phoneNumber"`
+	OrderID     uint64 `json:"orderID"`
+}
+
 const (
 	setHeaderFooter = iota
 
@@ -43,7 +56,7 @@ const (
 	setTreatment
 	removeTreatment
 
-	bookingsOnDate
+	listBookings
 	addBooking
 	updateBooking
 	removeBooking
@@ -200,6 +213,56 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 		// remove treatment page
 		generatePages(-1)
 		return nil, nil
+	case "listBookings":
+		var dates [2]uint64
+		if err := json.Unmarshal(data, &dates); err != nil {
+			return nil, err
+		}
+		r, err := statements[listBookings].Query(dates[0], dates[1])
+		if err != nil {
+			return nil, err
+		}
+		var b booking
+		buf := json.RawMessage{'['}
+		first := true
+		for r.Next() {
+			if err := r.Scan(&b.ID, &b.Date, &b.BlockNum, &b.TotalBlocks, &b.TreatmentID, &b.Name, &b.Email, &b.Phone, &b.OrderID); err != nil {
+				return nil, err
+			}
+			if first {
+				first = false
+			} else {
+				buf = append(buf, ',')
+			}
+			buf = strconv.AppendUint(append(buf, "{\"id\":"...), b.ID, 10)
+			buf = strconv.AppendUint(append(buf, ",\"date\":"...), b.Date, 10)
+			buf = appendNum(append(buf, ",\"blockNum\":"...), b.BlockNum)
+			buf = appendNum(append(buf, ",\"totalBlocks\":"...), b.TotalBlocks)
+			buf = strconv.AppendUint(append(buf, ",\"treatmentID\":"...), b.TreatmentID, 10)
+			buf = appendString(append(buf, ",\"name\":"...), b.Name)
+			buf = appendString(append(buf, ",\"emailAddress\":"...), b.Email)
+			buf = appendString(append(buf, ",\"phoneNumber\":"...), b.Phone)
+			buf = strconv.AppendUint(append(buf, ",\"orderID\":"...), b.OrderID, 10)
+			buf = append(buf, '}')
+		}
+		return append(buf, ']'), nil
+	case "updateBooking":
+		var b booking
+		if err := json.Unmarshal(data, &b); err != nil {
+			return nil, err
+		}
+		if _, err := statements[updateBooking].Exec(b.Date, b.BlockNum, b.TotalBlocks, b.TreatmentID, b.Name, b.Email, b.Phone, b.OrderID); err != nil {
+			return nil, err
+		}
+		return nil, nil
+	case "removeBooking":
+		var bID uint64
+		if err := json.Unmarshal(data, &bID); err != nil {
+			return nil, err
+		}
+		if _, err := statements[removeBooking].Exec(bID); err != nil {
+			return nil, err
+		}
 	}
 	return nil, errors.New("unknown endpoint")
 }
@@ -281,7 +344,7 @@ func adminInit() (*admin, error) {
 
 		// Bookings
 
-		"SELECT [ID], [Date], [BlockNum], [TotalBlocks], [TreatmentID], [Name], [EmailAddress], [PhoneNumber], [OrderID] FROM [Bookings] WHERE [Date] = ?;",
+		"SELECT [ID], [Date], [BlockNum], [TotalBlocks], [TreatmentID], [Name], [EmailAddress], [PhoneNumber], [OrderID] FROM [Bookings] WHERE [Date] BETWEEN ? AND ? ORDER BY [Date] ASC, [BlockNum] ASC;",
 		"INSERT INTO [Treatments] ([Date], [BlockNum], [TotalBlocks], [TreatmentID], [Name], [EmailAddress], [PhoneNumber], [OrderID]) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
 		"UPDATE [Treatments] SET [Date] = ?, [BlockNum] = ?, [TotalBlocks] = ?, [TreatmentID] = ?, [Name] = ?, [EmailAddress] = ?, [PhoneNumber] = ? WHERE [ID] = ?;",
 		"DELETE FROM [Treatments] WHERE [ID] = ?;",
