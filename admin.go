@@ -43,6 +43,11 @@ const (
 	setTreatment
 	removeTreatment
 
+	bookingsOnDate
+	addBooking
+	updateBooking
+	removeBooking
+
 	totalStmts
 )
 
@@ -272,6 +277,13 @@ func adminInit() (*admin, error) {
 		"SELECT [ID], [Name], [Group], [Price], [Description], [Duration] FROM [Treatments];",
 		"INSERT INTO [Treatments] ([Name], [Group], [Price], [Description], [Duration]) VALUES (?, ?, ?, ?, ?);",
 		"UPDATE [Treatments] SET [Name] = ?, [Group] = ?, [Price] = ?, [Description] = ?, [Duration] = ? WHERE [ID] = ?;",
+		"DELETE FROM [Treatments] WHERE [ID] = ?;",
+
+		// Bookings
+
+		"SELECT [ID], [Date], [BlockNum], [TotalBlocks], [TreatmentID], [Name], [EmailAddress], [PhoneNumber], [OrderID] FROM [Bookings] WHERE [Date] = ?;",
+		"INSERT INTO [Treatments] ([Date], [BlockNum], [TotalBlocks], [TreatmentID], [Name], [EmailAddress], [PhoneNumber], [OrderID]) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
+		"UPDATE [Treatments] SET [Date] = ?, [BlockNum] = ?, [TotalBlocks] = ?, [TreatmentID] = ?, [Name] = ?, [EmailAddress] = ?, [PhoneNumber] = ? WHERE [ID] = ?;",
 		"DELETE FROM [Treatments] WHERE [ID] = ?;",
 	} {
 		stmt, err := db.Prepare(ps)
