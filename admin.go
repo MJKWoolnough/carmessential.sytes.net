@@ -208,7 +208,7 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 		generatePages(int64(t.ID))
 		return nil, nil
 	case "removeTreatment":
-		var id uint32
+		var id uint64
 		if err := json.Unmarshal(data, &id); err != nil {
 			return nil, err
 		}
