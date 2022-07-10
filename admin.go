@@ -218,6 +218,55 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 		// remove treatment page
 		generatePages(-1)
 		return nil, nil
+	case "getOrderTime":
+		var id uint64
+		if err := json.Unmarshal(data, &id); err != nil {
+			return nil, err
+		}
+		var t uint64
+		if err := statements[orderTime].QueryRow(id).Scan(&t); err != nil {
+			return nil, err
+		}
+		return t, nil
+	case "addOrder":
+		var bookings []booking
+		if err := json.Unmarshal(data, &bookings); err != nil {
+			return nil, err
+		}
+		r, err := statements[addOrder].Exec(uint64(time.Now().Unix()))
+		if err != nil {
+			return nil, err
+		}
+		oid, err := r.LastInsertId()
+		if err != nil {
+			return nil, err
+		}
+		ids := make([]uint64, 1, len(bookings)+1)
+		ids[0] = uint64(oid)
+		for _, b := range bookings {
+			r, err := statements[addBooking].Exec(b.Date, b.BlockNum, b.TotalBlocks, b.TreatmentID, b.Name, b.Email, b.Phone, ids[0])
+			if err != nil {
+				return nil, err
+			}
+			id, err := r.LastInsertId()
+			if err != nil {
+				return nil, err
+			}
+			ids = append(ids, uint64(id))
+		}
+		return ids, nil
+	case "removeOrder":
+		var id uint64
+		if err := json.Unmarshal(data, &id); err != nil {
+			return nil, err
+		}
+		if _, err := statements[removeOrderBookings].Exec(id); err != nil {
+			return nil, err
+		}
+		if _, err := statements[removeOrder].Exec(id); err != nil {
+			return nil, err
+		}
+		return nil, nil
 	case "listBookings":
 		var dates [2]uint64
 		if err := json.Unmarshal(data, &dates); err != nil {
