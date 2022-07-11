@@ -162,15 +162,11 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 		if err != nil {
 			return nil, err
 		}
+		var t treatment
 		buf := memio.Buffer("[")
 		first := true
 		for r.Next() {
-			var (
-				id                       uint64
-				price, duration          uint32
-				name, group, description string
-			)
-			if err := r.Scan(id, name, group, price, description, duration); err != nil {
+			if err := r.Scan(t.ID, t.Name, t.Group, t.Price, t.Description, t.Duration); err != nil {
 				return nil, err
 			}
 			if first {
@@ -178,12 +174,12 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 			} else {
 				buf = append(buf, ',')
 			}
-			buf = strconv.AppendUint(append(buf, "{\"id\":"...), id, 10)
-			buf = appendString(append(buf, ",\"name\":"...), name)
-			buf = appendString(append(buf, ",\"group\":"...), group)
-			buf = strconv.AppendUint(append(buf, ",\"price\":"...), uint64(price), 10)
-			buf = appendString(append(buf, ",\"description\":"...), description)
-			buf = strconv.AppendUint(append(buf, ",\"price\":"...), uint64(duration), 10)
+			buf = strconv.AppendUint(append(buf, "{\"id\":"...), t.ID, 10)
+			buf = appendString(append(buf, ",\"name\":"...), t.Name)
+			buf = appendString(append(buf, ",\"group\":"...), t.Group)
+			buf = strconv.AppendUint(append(buf, ",\"price\":"...), uint64(t.Price), 10)
+			buf = appendString(append(buf, ",\"description\":"...), t.Description)
+			buf = strconv.AppendUint(append(buf, ",\"price\":"...), uint64(t.Duration), 10)
 			buf = append(buf, '}')
 		}
 		buf = append(buf, ']')
