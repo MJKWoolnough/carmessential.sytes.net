@@ -21,7 +21,6 @@ import (
 	"golang.org/x/net/websocket"
 	"vimagination.zapto.org/form"
 	"vimagination.zapto.org/jsonrpc"
-	"vimagination.zapto.org/memio"
 	"vimagination.zapto.org/sessions"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -163,7 +162,7 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 			return nil, err
 		}
 		var t treatment
-		buf := memio.Buffer("[")
+		buf := json.RawMessage{'['}
 		first := true
 		for r.Next() {
 			if err := r.Scan(t.ID, t.Name, t.Group, t.Price, t.Description, t.Duration); err != nil {
@@ -182,8 +181,7 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 			buf = strconv.AppendUint(append(buf, ",\"price\":"...), uint64(t.Duration), 10)
 			buf = append(buf, '}')
 		}
-		buf = append(buf, ']')
-		return json.RawMessage(buf), nil
+		return append(buf, ']'), nil
 	case "addTreatment":
 		var t treatment
 		if err := json.Unmarshal(data, &t); err != nil {
