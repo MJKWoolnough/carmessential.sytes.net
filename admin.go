@@ -178,7 +178,13 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 			} else {
 				buf = append(buf, ',')
 			}
-			fmt.Fprintf(&buf, "%d,%q,%q,%d,%q,%d", id, name, group, price, description, duration)
+			buf = strconv.AppendUint(append(buf, "{\"id\":"...), id, 10)
+			buf = appendString(append(buf, ",\"name\":"...), name)
+			buf = appendString(append(buf, ",\"group\":"...), group)
+			buf = strconv.AppendUint(append(buf, ",\"price\":"...), uint64(price), 10)
+			buf = appendString(append(buf, ",\"description\":"...), description)
+			buf = strconv.AppendUint(append(buf, ",\"price\":"...), uint64(duration), 10)
+			buf = append(buf, '}')
 		}
 		buf = append(buf, ']')
 		return json.RawMessage(buf), nil
