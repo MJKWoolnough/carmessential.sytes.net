@@ -319,6 +319,7 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 		if _, err := statements[removeBooking].Exec(bID); err != nil {
 			return nil, err
 		}
+		return nil, nil
 	}
 	return nil, errors.New("unknown endpoint")
 }
