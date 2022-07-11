@@ -233,7 +233,15 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 		if err := json.Unmarshal(data, &bookings); err != nil {
 			return nil, err
 		}
-		r, err := statements[addOrder].Exec(uint64(time.Now().Unix()))
+		tx, err := db.Begin()
+		if err != nil {
+			return nil, err
+		}
+		addBooking, err := tx.Prepare("INSERT INTO [Treatments] ([Date], [BlockNum], [TotalBlocks], [TreatmentID], [Name], [EmailAddress], [PhoneNumber], [OrderID]) VALUES (?, ?, ?, ?, ?, ?, ?, ?);")
+		if err != nil {
+			return nil, err
+		}
+		r, err := tx.Exec("INSERT INTO [Orders] ([Time]) VALUES (?);", uint64(time.Now().Unix()))
 		if err != nil {
 			return nil, err
 		}
@@ -244,7 +252,7 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 		ids := make([]uint64, 1, len(bookings)+1)
 		ids[0] = uint64(oid)
 		for _, b := range bookings {
-			r, err := statements[addBooking].Exec(b.Date, b.BlockNum, b.TotalBlocks, b.TreatmentID, b.Name, b.Email, b.Phone, ids[0])
+			r, err := addBooking.Exec(b.Date, b.BlockNum, b.TotalBlocks, b.TreatmentID, b.Name, b.Email, b.Phone, ids[0])
 			if err != nil {
 				return nil, err
 			}
@@ -253,6 +261,9 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 				return nil, err
 			}
 			ids = append(ids, uint64(id))
+		}
+		if err := tx.Commit(); err != nil {
+			return nil, err
 		}
 		return ids, nil
 	case "removeOrder":
