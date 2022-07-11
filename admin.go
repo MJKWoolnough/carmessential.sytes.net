@@ -305,7 +305,7 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 		if err := json.Unmarshal(data, &b); err != nil {
 			return nil, err
 		}
-		if _, err := statements[updateBooking].Exec(b.Date, b.BlockNum, b.TotalBlocks, b.TreatmentID, b.Name, b.Email, b.Phone, b.OrderID); err != nil {
+		if _, err := statements[updateBooking].Exec(b.Date, b.BlockNum, b.TotalBlocks, b.TreatmentID, b.Name, b.Email, b.Phone); err != nil {
 			return nil, err
 		}
 		return nil, nil
