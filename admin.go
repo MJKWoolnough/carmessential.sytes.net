@@ -320,8 +320,9 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 			return nil, err
 		}
 		return nil, nil
+	default:
+		return nil, errors.New("unknown endpoint")
 	}
-	return nil, errors.New("unknown endpoint")
 }
 
 func generatePages(id int64) {
