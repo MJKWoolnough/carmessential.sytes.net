@@ -271,10 +271,17 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 		if err := json.Unmarshal(data, &id); err != nil {
 			return nil, err
 		}
-		if _, err := statements[removeOrderBookings].Exec(id); err != nil {
+		tx, err := db.Begin()
+		if err != nil {
 			return nil, err
 		}
-		if _, err := statements[removeOrder].Exec(id); err != nil {
+		if _, err := tx.Exec("DELETE FROM [Bookings] WHERE [OrderID] = ?;", id); err != nil {
+			return nil, err
+		}
+		if _, err := tx.Exec("DELETE FROM [Orders] WHERE [ID] = ?;", id); err != nil {
+			return nil, err
+		}
+		if err := tx.Commit(); err != nil {
 			return nil, err
 		}
 		return nil, nil
