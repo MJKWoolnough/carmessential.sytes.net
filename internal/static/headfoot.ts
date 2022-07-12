@@ -32,7 +32,6 @@ const h = textarea(),
 		}
 	} else {
 		alert("Need to allow pop-up windows");
-		return;
 	}
       }}, "Update"),
       clear = button({"onclick": () => {
