@@ -9,7 +9,7 @@ const contents = div();
 
 ready.then(() => rpc.listTreatments().then(treatments => {
 	class Treatment {
-		#id: number;
+		id: number;
 		#name: string;
 		#nameSpan: HTMLSpanElement;
 		#group: string;
@@ -18,7 +18,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 		duration: number;
 		[node]: HTMLLIElement;
 		constructor(id = -1, name = "", group = "", price = 0, description = "", duration = 1) {
-			this.#id = id;
+			this.id = id;
 			this[node] = li([
 				this.#nameSpan = span(this.#name = name),
 				button({"onclick": () => setTreatment(this)}, "Edit"),
@@ -33,12 +33,6 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 			this.description = description;
 			this.duration = duration;
 		}
-		get id() {
-			return this.#id;
-		}
-		set id(i: number) {
-			this.#id = i;
-		}
 		get name() {
 			return this.#name;
 		}
@@ -51,7 +45,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 		set group(g: string) {
 			if (this.#group !== g) {
 				removeTreatmentFromGroup(this);
-				getGroup(this.#group = g).mp.set(this.#id, this);
+				getGroup(this.#group = g).mp.set(this.id, this);
 			}
 		}
 	}
