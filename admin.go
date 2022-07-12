@@ -237,11 +237,7 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 		if err != nil {
 			return nil, err
 		}
-		addBooking, err := tx.Prepare("INSERT INTO [Treatments] ([Date], [BlockNum], [TotalBlocks], [TreatmentID], [Name], [EmailAddress], [PhoneNumber], [OrderID]) VALUES (?, ?, ?, ?, ?, ?, ?, ?);")
-		if err != nil {
-			return nil, err
-		}
-		r, err := tx.Exec("INSERT INTO [Orders] ([Time]) VALUES (?);", uint64(time.Now().Unix()))
+		r, err := tx.Stmt(statements[addOrder]).Exec(uint64(time.Now().Unix()))
 		if err != nil {
 			return nil, err
 		}
@@ -251,6 +247,7 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 		}
 		ids := make([]uint64, 1, len(bookings)+1)
 		ids[0] = uint64(oid)
+		addBooking := tx.Stmt(statements[addBooking])
 		for _, b := range bookings {
 			r, err := addBooking.Exec(b.Date, b.BlockNum, b.TotalBlocks, b.TreatmentID, b.Name, b.Email, b.Phone, ids[0])
 			if err != nil {
@@ -275,10 +272,10 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 		if err != nil {
 			return nil, err
 		}
-		if _, err := tx.Exec("DELETE FROM [Bookings] WHERE [OrderID] = ?;", id); err != nil {
+		if _, err := tx.Stmt(statements[removeOrderBookings]).Exec(id); err != nil {
 			return nil, err
 		}
-		if _, err := tx.Exec("DELETE FROM [Orders] WHERE [ID] = ?;", id); err != nil {
+		if _, err := tx.Stmt(statements[removeOrder]).Exec(id); err != nil {
 			return nil, err
 		}
 		if err := tx.Commit(); err != nil {
