@@ -1,3 +1,4 @@
+import type {Children} from './lib/dom.js';
 import {amendNode, clearNode} from './lib/dom.js';
 import {div, h1, li, style, ul} from './lib/html.js';
 import {NodeMap, node, stringSort} from './lib/nodes.js';
@@ -47,7 +48,7 @@ export const setHeaderFooter = (h: string, f: string) => {
 	document.title = "Admin";
 	amendNode(document.head, style({"type": "text/css"}, css));
 },
-registerPage = (id: string, title: string, contents: HTMLElement, onchange?: () => boolean) => pages.set(id, {
+registerPage = (id: string, title: Children, contents: HTMLElement, onchange?: () => boolean) => pages.set(id, {
 	id,
 	contents,
 	fn: onchange,
