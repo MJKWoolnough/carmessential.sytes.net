@@ -427,9 +427,9 @@ func adminInit() (*admin, error) {
 		// Bookings
 
 		"SELECT [ID], [Date], [BlockNum], [TotalBlocks], [TreatmentID], [Name], [EmailAddress], [PhoneNumber], [OrderID] FROM [Bookings] WHERE [Date] BETWEEN ? AND ? ORDER BY [Date] ASC, [BlockNum] ASC;",
-		"INSERT INTO [Treatments] ([Date], [BlockNum], [TotalBlocks], [TreatmentID], [Name], [EmailAddress], [PhoneNumber], [OrderID]) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
-		"UPDATE [Treatments] SET [Date] = ?, [BlockNum] = ?, [TotalBlocks] = ?, [TreatmentID] = ?, [Name] = ?, [EmailAddress] = ?, [PhoneNumber] = ? WHERE [ID] = ?;",
-		"DELETE FROM [Treatments] WHERE [ID] = ?;",
+		"INSERT INTO [Bookings] ([Date], [BlockNum], [TotalBlocks], [TreatmentID], [Name], [EmailAddress], [PhoneNumber], [OrderID]) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
+		"UPDATE [Bookings] SET [Date] = ?, [BlockNum] = ?, [TotalBlocks] = ?, [TreatmentID] = ?, [Name] = ?, [EmailAddress] = ?, [PhoneNumber] = ? WHERE [ID] = ?;",
+		"DELETE FROM [Bookings] WHERE [ID] = ?;",
 	} {
 		stmt, err := db.Prepare(ps)
 		if err != nil {
