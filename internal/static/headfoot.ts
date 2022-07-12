@@ -35,8 +35,8 @@ const h = textarea(),
 	}
       }}, "Update"),
       clear = button({"onclick": () => {
-		clearNode(h, header);
-		clearNode(f, footer);
+	clearNode(h, header);
+	clearNode(f, footer);
       }}, "Reset"),
       elements = [h, f, update, clear];
 
