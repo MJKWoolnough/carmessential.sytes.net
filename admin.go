@@ -417,14 +417,12 @@ func adminInit() (*admin, error) {
 		"DELETE FROM [Treatments] WHERE [ID] = ?;",
 
 		// Orders
-
 		"SELECT [Time] FROM [Orders] WHERE [ID] = ?;",
 		"INSERT INTO [Orders] ([Time]) VALUES (?);",
 		"DELETE FROM [Orders] WHERE [ID] = ?;",
 		"DELETE FROM [Treatments] WHERE [OrderID] = ?;",
 
 		// Bookings
-
 		"SELECT [ID], [Date], [BlockNum], [TotalBlocks], [TreatmentID], [Name], [EmailAddress], [PhoneNumber], [OrderID] FROM [Bookings] WHERE [Date] BETWEEN ? AND ? ORDER BY [Date] ASC, [BlockNum] ASC;",
 		"INSERT INTO [Bookings] ([Date], [BlockNum], [TotalBlocks], [TreatmentID], [Name], [EmailAddress], [PhoneNumber], [OrderID]) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
 		"UPDATE [Bookings] SET [Date] = ?, [BlockNum] = ?, [TotalBlocks] = ?, [TreatmentID] = ?, [Name] = ?, [EmailAddress] = ?, [PhoneNumber] = ? WHERE [ID] = ?;",
