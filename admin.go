@@ -237,6 +237,7 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 		if err != nil {
 			return nil, err
 		}
+		defer tx.Rollback()
 		r, err := tx.Stmt(statements[addOrder]).Exec(uint64(time.Now().Unix()))
 		if err != nil {
 			return nil, err
@@ -272,6 +273,7 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 		if err != nil {
 			return nil, err
 		}
+		defer tx.Rollback()
 		if _, err := tx.Stmt(statements[removeOrderBookings]).Exec(id); err != nil {
 			return nil, err
 		}
