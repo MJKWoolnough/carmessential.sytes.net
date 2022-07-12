@@ -402,10 +402,8 @@ func adminInit() (*admin, error) {
 		if _, err = db.Exec("INSERT INTO [Settings] ([Version]) VALUES (0);"); err != nil {
 			return nil, err
 		}
-	} else {
-		if err = db.QueryRow("SELECT [Header], [Footer] FROM [Settings];").Scan(&header, &footer); err != nil {
-			return nil, err
-		}
+	} else if err = db.QueryRow("SELECT [Header], [Footer] FROM [Settings];").Scan(&header, &footer); err != nil {
+		return nil, err
 	}
 	for n, ps := range []string{
 		"UPDATE [Settings] SET [Header] = ?, [Footer] = ?;",
