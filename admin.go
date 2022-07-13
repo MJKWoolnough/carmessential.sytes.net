@@ -129,7 +129,7 @@ func (a *admin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (a *admin) serveConn(wconn *websocket.Conn) {
 	hf.RLock()
-	fmt.Fprintf(wconn, "{\"id\":-2,\"result\":{\"header\":%q,\"footer\":%q}}", header, footer)
+	fmt.Fprintf(wconn, "{\"id\":-2,\"result\":[%q,%q]}", header, footer)
 	hf.RUnlock()
 	if atomic.CompareAndSwapUint32(&adminOnline, 0, 1) {
 		wconn.Write(goodAdmin)
