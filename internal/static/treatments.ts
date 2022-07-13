@@ -1,7 +1,9 @@
+import parseBBCode from './lib/bbcode.js';
+import {all} from './lib/bbcode_tags.js';
 import {amendNode, clearNode} from './lib/dom.js';
 import {br, button, datalist, div, h1, input, li, option, span, textarea, ul} from './lib/html.js';
 import {NodeMap, node, stringSort} from './lib/nodes.js';
-import {registerPage, setPage} from './pages.js';
+import {footer, header, registerPage, setPage} from './pages.js';
 import {ready, rpc} from './rpc.js';
 import {labels} from './shared.js';
 
@@ -150,6 +152,21 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 		labels("Treatment Price (£): ", treatmentPrice),
 		br(),
 		labels("Treatment Description: ", treatmentDescription),
+		button({"onclick": () => {
+			const wp = window.open("", "", "");
+			if (wp) {
+				wp.document.documentElement.innerHTML = `${header}<div id="TREATMENTTESTER"></div>${footer}`;
+				const tester = wp.document.getElementById("TREATMENTTESTER");
+				if (tester) {
+					tester.replaceWith(parseBBCode(all, treatmentDescription.value));
+				} else {
+					wp.close();
+					alert("Invalid Header or Footer");
+				}
+			} else {
+				alert("Preview popup failed");
+			}
+		}}, "Preview"),
 		br(),
 		labels("Treatment Duration (m): ", treatmentDuration),
 		br(),
