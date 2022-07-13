@@ -8,7 +8,7 @@ declare const pageLoad: Promise<void>;
 export const rpc = {} as RPCType,
 ready = pageLoad.then(() => WS("/admin")).then(ws => {
 	const arpc = new RPC(ws);
-	return arpc.await(-2).then(({header: h, footer: f}: {header: string, footer: string}) => {
+	return arpc.await(-2).then(([h, f]: [string, string]) => {
 		setHeaderFooter(h, f);
 		return arpc.await(-1).then(() => {
 			Object.freeze(Object.assign(rpc, {
