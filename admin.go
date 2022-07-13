@@ -418,7 +418,7 @@ func adminInit() (*admin, error) {
 		"SELECT [Time] FROM [Orders] WHERE [ID] = ?;",
 		"INSERT INTO [Orders] ([Time]) VALUES (?);",
 		"DELETE FROM [Orders] WHERE [ID] = ?;",
-		"DELETE FROM [Treatments] WHERE [OrderID] = ?;",
+		"DELETE FROM [Bookings] WHERE [OrderID] = ?;",
 
 		// Bookings
 		"SELECT [ID], [Date], [BlockNum], [TotalBlocks], [TreatmentID], [Name], [EmailAddress], [PhoneNumber], [OrderID] FROM [Bookings] WHERE [Date] BETWEEN ? AND ? ORDER BY [Date] ASC, [BlockNum] ASC;",
