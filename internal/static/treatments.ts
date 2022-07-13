@@ -25,7 +25,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 				button({"onclick": () => setTreatment(this)}, "Edit"),
 				button({"onclick": () => {
 					if (confirm("Are you sure you wish to remove this treatment?")) {
-						removeTreatmentFromGroup(this);
+						rpc.removeTreatment(this.id).then(() => removeTreatmentFromGroup(this));
 					}
 				}}, "Remove")
 			]);
