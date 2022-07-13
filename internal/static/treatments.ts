@@ -125,7 +125,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 			const group = groups.get(t.group);
 			if (group) {
 				group.mp.delete(t.id);
-				if (!groups.size) {
+				if (!group.mp.size) {
 					groups.delete(t.group);
 					groupList.delete(t.group);
 				}
