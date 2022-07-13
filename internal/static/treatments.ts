@@ -54,7 +54,7 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 	type Group = {
 		group: string;
 		mp: NodeMap<number, Treatment, HTMLUListElement>;
-		[node]: HTMLUListElement;
+		[node]: HTMLLIElement;
 	}
 
 	const treatmentSort = (a: Treatment, b: Treatment) => stringSort(a.name, b.name),
@@ -113,7 +113,10 @@ ready.then(() => rpc.listTreatments().then(treatments => {
 			groups.set(group, g = {
 				mp,
 				group,
-				[node]: mp[node]
+				[node]: li([
+					group,
+					mp[node]
+				])
 			});
 		}
 		return g;
