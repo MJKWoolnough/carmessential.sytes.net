@@ -165,7 +165,7 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 		buf := json.RawMessage{'['}
 		first := true
 		for r.Next() {
-			if err := r.Scan(t.ID, t.Name, t.Group, t.Price, t.Description, t.Duration); err != nil {
+			if err := r.Scan(&t.ID, &t.Name, &t.Group, &t.Price, &t.Description, &t.Duration); err != nil {
 				return nil, err
 			}
 			if first {
