@@ -47,6 +47,22 @@ type booking struct {
 	OrderID     uint64 `json:"orderID"`
 }
 
+type voucher struct {
+	ID      uint64 `json:"id"`
+	Code    string `json:"code"`
+	Name    string `json:"name"`
+	Expiry  uint64 `json:"expiry"`
+	OrderID uint64 `json:"orderID"`
+	IsValue bool   `json:"isValue"`
+	Value   uint64 `json:"value"`
+	Valid   bool   `json:"valid"`
+}
+
+type order struct {
+	Bookings []booking `json:"bookings"`
+	Vouchers []voucher `json:"vouchers"`
+}
+
 const (
 	setHeaderFooter = iota
 
@@ -237,8 +253,8 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 		}
 		return t, nil
 	case "addOrder":
-		var bookings []booking
-		if err := json.Unmarshal(data, &bookings); err != nil {
+		var order order
+		if err := json.Unmarshal(data, &order); err != nil {
 			return nil, err
 		}
 		tx, err := db.Begin()
@@ -254,11 +270,13 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 		if err != nil {
 			return nil, err
 		}
-		ids := make([]uint64, 1, len(bookings)+1)
-		ids[0] = uint64(oid)
+		orderID := uint64(oid)
 		addBooking := tx.Stmt(statements[addBooking])
-		for _, b := range bookings {
-			r, err := addBooking.Exec(b.Date, b.BlockNum, b.TotalBlocks, b.TreatmentID, b.Name, b.Email, b.Phone, ids[0])
+		addVoucher := tx.Stmt(statements[addVoucher])
+		buf := strconv.AppendUint(append(data[:0], "{\"orderID\":"...), orderID, 10)
+		buf = append(buf, ",\"bookings\":["...)
+		for n, b := range order.Bookings {
+			r, err := addBooking.Exec(b.Date, b.BlockNum, b.TotalBlocks, b.TreatmentID, b.Name, b.Email, b.Phone, orderID)
 			if err != nil {
 				return nil, err
 			}
@@ -266,12 +284,32 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 			if err != nil {
 				return nil, err
 			}
-			ids = append(ids, uint64(id))
+			if n > 0 {
+				buf = append(buf, ',')
+			}
+			buf = strconv.AppendUint(buf, uint64(id), 10)
 		}
+		buf = append(buf, "],\"vouchers\":["...)
+		for n, v := range order.Vouchers {
+			v.Code = generateVoucherCode()
+			r, err := addVoucher.Exec(v.Code, v.Name, v.Expiry, v.OrderID, v.IsValue, v.Valid, v.Valid)
+			if err != nil {
+				return nil, err
+			}
+			id, err := r.LastInsertId()
+			if err != nil {
+				return nil, err
+			}
+			if n > 0 {
+				buf = append(buf, ',')
+			}
+			buf = strconv.AppendUint(buf, uint64(id), 10)
+		}
+		buf = append(buf, ']', '}')
 		if err := tx.Commit(); err != nil {
 			return nil, err
 		}
-		return ids, nil
+		return buf, nil
 	case "removeOrder":
 		var id uint64
 		if err := json.Unmarshal(data, &id); err != nil {
@@ -349,6 +387,10 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 }
 
 func generatePages(id int64) {
+}
+
+func generateVoucherCode() string {
+	return ""
 }
 
 func init() {
