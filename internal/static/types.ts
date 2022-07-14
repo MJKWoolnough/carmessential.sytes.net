@@ -19,6 +19,22 @@ export type Treatment = {
 	duration: number;
 }
 
+export type Voucher = {
+	id: number;
+	code: string;
+	name: string;
+	expiry: number;
+	isValue: boolean;
+	value: number;
+	valid: boolean;
+}
+
+export type OrderResponse = {
+	orderID: number;
+	bookings: number[];
+	vouchers: [number, string][];
+}
+
 export type RPCType = {
 	setHeaderFooter: (header: string, footer: string) => Promise<void>;
 	listTreatments: () => Promise<Treatment[]>;
@@ -26,7 +42,7 @@ export type RPCType = {
 	setTreatment: (id: number, name: string, group: string, price: number, description: string, duration: number) => Promise<void>;
 	removeTreatment: (id: number) => Promise<void>;
 	getOrderTime: (id: number) => Promise<number>;
-	addOrder: (bookings: Booking[]) => Promise<number[]>;
+	addOrder: (bookings: Omit<Booking, "id" | "orderID">[], vouchers: Omit<Voucher, "id" | "code" | "valid" | "orderID">[]) => Promise<OrderResponse>;
 	removeOrder: (id: number) => Promise<void>;
 	listBookings: (start: number, end: number) => Promise<Booking[]>;
 	updateBooking: (booking: Booking) => Promise<void>;
