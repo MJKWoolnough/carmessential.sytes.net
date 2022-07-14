@@ -345,6 +345,9 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 		if _, err := tx.Stmt(statements[removeOrderBookings]).Exec(id); err != nil {
 			return nil, err
 		}
+		if _, err := tx.Stmt(statements[removeOrderVouchers]).Exec(id); err != nil {
+			return nil, err
+		}
 		if _, err := tx.Stmt(statements[removeOrder]).Exec(id); err != nil {
 			return nil, err
 		}
