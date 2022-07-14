@@ -1,4 +1,4 @@
-import type {Booking, RPCType} from './types.js';
+import type {Booking, RPCType, Voucher} from './types.js';
 import {WS} from './lib/conn.js';
 import {RPC} from './lib/rpc.js';
 import {setHeaderFooter} from './pages.js';
@@ -18,7 +18,7 @@ ready = pageLoad.then(() => WS("/admin")).then(ws => {
 				"setTreatment": (id: number, name: string, group: string, price: number, description: string, duration: number) => arpc.request("setTreatment", {id, name, group, price, description, duration}),
 				"removeTreatment": (id: number) => arpc.request("removeTreatment", id),
 				"getOrderTime": (id: number) => arpc.request("getOrderTime", id),
-				"addOrder": (bookings: Booking[]) => arpc.request("addOrder", bookings),
+				"addOrder": (bookings: Booking[], vouchers: Voucher[]) => arpc.request("addOrder", {bookings, vouchers}),
 				"removeOrder": (id: number) => arpc.request("removeOrder", id),
 				"listBookings": (start: number, end: number) => arpc.request("listBookings", [start, end]),
 				"updateBooking": (b: Booking) => arpc.request("updateBooking", b),
