@@ -59,11 +59,19 @@ const (
 	addOrder
 	removeOrder
 	removeOrderBookings
+	removeOrderVouchers
 
 	listBookings
 	addBooking
 	updateBooking
 	removeBooking
+
+	getVoucher
+	getVoucherByCode
+	addVoucher
+	updateVoucher
+	removeVoucher
+	setVoucherValid
 
 	totalStmts
 )
@@ -420,12 +428,21 @@ func adminInit() (*admin, error) {
 		"INSERT INTO [Orders] ([Time]) VALUES (?);",
 		"DELETE FROM [Orders] WHERE [ID] = ?;",
 		"DELETE FROM [Bookings] WHERE [OrderID] = ?;",
+		"DELETE FROM [Vouchers] WHERE [OrderID] = ?;",
 
 		// Bookings
 		"SELECT [ID], [Date], [BlockNum], [TotalBlocks], [TreatmentID], [Name], [EmailAddress], [PhoneNumber], [OrderID] FROM [Bookings] WHERE [Date] BETWEEN ? AND ? ORDER BY [Date] ASC, [BlockNum] ASC;",
 		"INSERT INTO [Bookings] ([Date], [BlockNum], [TotalBlocks], [TreatmentID], [Name], [EmailAddress], [PhoneNumber], [OrderID]) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
 		"UPDATE [Bookings] SET [Date] = ?, [BlockNum] = ?, [TotalBlocks] = ?, [TreatmentID] = ?, [Name] = ?, [EmailAddress] = ?, [PhoneNumber] = ? WHERE [ID] = ?;",
 		"DELETE FROM [Bookings] WHERE [ID] = ?;",
+
+		// Vouchers
+		"SELECT [Code], [Name], [Expiry], [OrderID] [IsValue], [Value], [Valid] FROM [Vouchers] WHERE [ID] = ?;",
+		"SELECT [ID], [Name], [Expiry], [OrderID] [IsValue], [Value], [Valid] FROM [Vouchers] WHERE [Code] = ?;",
+		"INSERT INTO [Vouchers] ([Code], [Name], [Expiry], [OrderID] [IsValue], [Value]) VALUES (?, ?, ?, ?, ?, ?);",
+		"UPDATE [Vouchers] SET [Name] = ?, [Expiry] = ? WHERE [ID] = ?;",
+		"DELETE FROM [Vouchers] WHERE [ID] = ?;",
+		"UPDATE [Vouchers] SET [Valid] = ? WHERE [ID] = ?;",
 	} {
 		stmt, err := db.Prepare(ps)
 		if err != nil {
