@@ -88,6 +88,7 @@ const (
 	updateVoucher
 	removeVoucher
 	setVoucherValid
+	checkVoucherCode
 
 	totalStmts
 )
@@ -271,39 +272,50 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 			return nil, err
 		}
 		orderID := uint64(oid)
-		addBooking := tx.Stmt(statements[addBooking])
-		addVoucher := tx.Stmt(statements[addVoucher])
 		buf := strconv.AppendUint(append(data[:0], "{\"orderID\":"...), orderID, 10)
 		buf = append(buf, ",\"bookings\":["...)
-		for n, b := range order.Bookings {
-			r, err := addBooking.Exec(b.Date, b.BlockNum, b.TotalBlocks, b.TreatmentID, b.Name, b.Email, b.Phone, orderID)
-			if err != nil {
-				return nil, err
+		if len(order.Bookings) > 0 {
+			addBooking := tx.Stmt(statements[addBooking])
+			for n, b := range order.Bookings {
+				r, err := addBooking.Exec(b.Date, b.BlockNum, b.TotalBlocks, b.TreatmentID, b.Name, b.Email, b.Phone, orderID)
+				if err != nil {
+					return nil, err
+				}
+				id, err := r.LastInsertId()
+				if err != nil {
+					return nil, err
+				}
+				if n > 0 {
+					buf = append(buf, ',')
+				}
+				buf = strconv.AppendUint(buf, uint64(id), 10)
 			}
-			id, err := r.LastInsertId()
-			if err != nil {
-				return nil, err
-			}
-			if n > 0 {
-				buf = append(buf, ',')
-			}
-			buf = strconv.AppendUint(buf, uint64(id), 10)
 		}
 		buf = append(buf, "],\"vouchers\":["...)
-		for n, v := range order.Vouchers {
-			v.Code = generateVoucherCode()
-			r, err := addVoucher.Exec(v.Code, v.Name, v.Expiry, v.OrderID, v.IsValue, v.Valid, v.Valid)
-			if err != nil {
-				return nil, err
+		if len(order.Vouchers) > 0 {
+			addVoucher := tx.Stmt(statements[addVoucher])
+			checkVoucher := tx.Stmt(statements[checkVoucherCode])
+			for n, v := range order.Vouchers {
+				var valid uint8
+				for valid == 0 {
+					v.Code = generateVoucherCode()
+					if err := checkVoucher.QueryRow(v.Code).Scan(&valid); err != nil {
+						return nil, err
+					}
+				}
+				r, err := addVoucher.Exec(v.Code, v.Name, v.Expiry, v.OrderID, v.IsValue, v.Valid, v.Valid)
+				if err != nil {
+					return nil, err
+				}
+				id, err := r.LastInsertId()
+				if err != nil {
+					return nil, err
+				}
+				if n > 0 {
+					buf = append(buf, ',')
+				}
+				buf = strconv.AppendUint(buf, uint64(id), 10)
 			}
-			id, err := r.LastInsertId()
-			if err != nil {
-				return nil, err
-			}
-			if n > 0 {
-				buf = append(buf, ',')
-			}
-			buf = strconv.AppendUint(buf, uint64(id), 10)
 		}
 		buf = append(buf, ']', '}')
 		if err := tx.Commit(); err != nil {
