@@ -403,6 +403,74 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 			return nil, err
 		}
 		return nil, nil
+	case "getVoucher":
+		var id uint64
+		if err := json.Unmarshal(data, &id); err != nil {
+			return nil, err
+		}
+		var (
+			v       voucher
+			isValue uint8
+			valid   uint8
+		)
+		if err := statements[getVoucher].QueryRow(id).Scan(&v.Code, &v.Name, &v.Expiry, &v.OrderID, isValue, &v.Value, &valid); err != nil {
+			return nil, err
+		}
+		v.ID = id
+		v.IsValue = isValue == 1
+		v.Valid = valid == 1
+		return v, nil
+	case "getVoucherByCode":
+		var code string
+		if err := json.Unmarshal(data, &code); err != nil {
+			return nil, err
+		}
+		var (
+			v       voucher
+			isValue uint8
+			valid   uint8
+		)
+		if err := statements[getVoucherByCode].QueryRow(code).Scan(&v.ID, &v.Name, &v.Expiry, &v.OrderID, isValue, &v.Value, &valid); err != nil {
+			return nil, err
+		}
+		v.Code = code
+		v.IsValue = isValue == 1
+		v.Valid = valid == 1
+		return v, nil
+	case "updateVoucher":
+		var v voucher
+		if err := json.Unmarshal(data, &v); err != nil {
+			return nil, err
+		}
+		if _, err := statements[updateVoucher].Exec(v.Name, v.Expiry, v.ID); err != nil {
+			return nil, err
+		}
+		return nil, nil
+	case "removeVoucher":
+		var id uint64
+		if err := json.Unmarshal(data, &id); err != nil {
+			return nil, err
+		}
+		if _, err := statements[updateVoucher].Exec(id); err != nil {
+			return nil, err
+		}
+		return nil, nil
+	case "setVoucherValid":
+		var idValid struct {
+			ID    uint64 `json:"id"`
+			Valid bool   `json:"valid"`
+		}
+		if err := json.Unmarshal(data, &idValid); err != nil {
+			return nil, err
+		}
+		valid := 0
+		if idValid.Valid {
+			valid = 1
+		}
+		if _, err := statements[setVoucherValid].Exec(valid, idValid.ID); err != nil {
+			return nil, err
+		}
+		return nil, nil
 	default:
 		return nil, errors.New("unknown endpoint")
 	}
