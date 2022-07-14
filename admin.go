@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"math/rand"
 	"net/http"
 	"os"
 	"strconv"
@@ -92,6 +93,8 @@ const (
 
 	totalStmts
 )
+
+const codeChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 var (
 	//go:embed admin.html
@@ -296,9 +299,16 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 			addVoucher := tx.Stmt(statements[addVoucher])
 			checkVoucher := tx.Stmt(statements[checkVoucherCode])
 			for n, v := range order.Vouchers {
-				var valid uint8
+				var (
+					valid uint8
+					code  = make([]byte, 0, 10)
+				)
 				for valid == 0 {
-					v.Code = generateVoucherCode()
+					code = code[:8+rand.Intn(3)]
+					for n := range code {
+						code[n] = codeChars[rand.Intn(len(codeChars))]
+					}
+					v.Code = string(code)
 					if err := checkVoucher.QueryRow(v.Code).Scan(&valid); err != nil {
 						return nil, err
 					}
@@ -399,10 +409,6 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 }
 
 func generatePages(id int64) {
-}
-
-func generateVoucherCode() string {
-	return ""
 }
 
 func init() {
