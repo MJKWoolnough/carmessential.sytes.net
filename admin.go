@@ -331,7 +331,7 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 		if len(order.UsedVouchers) > 0 {
 			useVoucher := tx.Stmt(statements[useVoucher])
 			for _, u := range order.UsedVouchers {
-				if _, err := useVoucher.Exec(u); err != nil {
+				if _, err := useVoucher.Exec(orderID, u); err != nil {
 					return nil, err
 				}
 			}
