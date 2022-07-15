@@ -22,7 +22,12 @@ ready = pageLoad.then(() => WS("/admin")).then(ws => {
 				"removeOrder": (id: number) => arpc.request("removeOrder", id),
 				"listBookings": (start: number, end: number) => arpc.request("listBookings", [start, end]),
 				"updateBooking": (b: Booking) => arpc.request("updateBooking", b),
-				"removeBooking": (id: number) => arpc.request("removeBooking", id)
+				"removeBooking": (id: number) => arpc.request("removeBooking", id),
+				"getVoucher": (id: number) => arpc.request("getVoucher", id),
+				"getVoucherByCode": (code: string) => arpc.request("getVoucherByCode", code),
+				"updateVoucher": (id: number, name: string, expiry: number) => arpc.request("updateVoucher", {id, name, expiry}),
+				"removeVoucher": (id: number) => arpc.request("removeVoucher", id),
+				"setVoucherValid": (id: number, valid: boolean) => arpc.request("getVoucher", {id, valid})
 			}));
 		});
 	});
