@@ -49,19 +49,21 @@ type booking struct {
 }
 
 type voucher struct {
-	ID      uint64 `json:"id"`
-	Code    string `json:"code"`
-	Name    string `json:"name"`
-	Expiry  uint64 `json:"expiry"`
-	OrderID uint64 `json:"orderID"`
-	IsValue bool   `json:"isValue"`
-	Value   uint64 `json:"value"`
-	Valid   bool   `json:"valid"`
+	ID        uint64 `json:"id"`
+	Code      string `json:"code"`
+	Name      string `json:"name"`
+	Expiry    uint64 `json:"expiry"`
+	OrderID   uint64 `json:"orderID"`
+	IsValue   bool   `json:"isValue"`
+	Value     uint64 `json:"value"`
+	Valid     bool   `json:"valid"`
+	OrderUsed uint64 `json:"orderUsed"`
 }
 
 type order struct {
-	Bookings []booking `json:"bookings"`
-	Vouchers []voucher `json:"vouchers"`
+	Bookings     []booking `json:"bookings"`
+	Vouchers     []voucher `json:"vouchers"`
+	UsedVouchers []uint64  `json:"usedVouchers"`
 }
 
 const (
@@ -326,6 +328,14 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 			}
 		}
 		buf = append(buf, ']', '}')
+		if len(order.UsedVouchers) > 0 {
+			useVoucher := tx.Stmt(statements[useVoucher])
+			for _, u := range order.UsedVouchers {
+				if _, err := useVoucher.Exec(u); err != nil {
+					return nil, err
+				}
+			}
+		}
 		if err := tx.Commit(); err != nil {
 			return nil, err
 		}
@@ -414,7 +424,7 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 			isValue uint8
 			valid   uint8
 		)
-		if err := statements[getVoucher].QueryRow(id).Scan(&v.Code, &v.Name, &v.Expiry, &v.OrderID, isValue, &v.Value, &valid); err != nil {
+		if err := statements[getVoucher].QueryRow(id).Scan(&v.Code, &v.Name, &v.Expiry, &v.OrderID, isValue, &v.Value, &valid, &v.OrderUsed); err != nil {
 			return nil, err
 		}
 		v.ID = id
@@ -431,7 +441,7 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 			isValue uint8
 			valid   uint8
 		)
-		if err := statements[getVoucherByCode].QueryRow(code).Scan(&v.ID, &v.Name, &v.Expiry, &v.OrderID, isValue, &v.Value, &valid); err != nil {
+		if err := statements[getVoucherByCode].QueryRow(code).Scan(&v.ID, &v.Name, &v.Expiry, &v.OrderID, isValue, &v.Value, &valid, &v.OrderUsed); err != nil {
 			return nil, err
 		}
 		v.Code = code
@@ -567,7 +577,7 @@ func adminInit() (*admin, error) {
 
 		// Vouchers
 		"SELECT [Code], [Name], [Expiry], [OrderID] [IsValue], [Value], [Valid], [OrderUsed] FROM [Vouchers] WHERE [ID] = ?;",
-		"SELECT [ID], [Name], [Expiry], [OrderID] [IsValue], [Value], [Valid] FROM [Vouchers] WHERE [Code] = ?;",
+		"SELECT [ID], [Name], [Expiry], [OrderID] [IsValue], [Value], [Valid], [OrderUsed] FROM [Vouchers] WHERE [Code] = ?;",
 		"INSERT INTO [Vouchers] ([Code], [Name], [Expiry], [OrderID] [IsValue], [Value]) VALUES (?, ?, ?, ?, ?, ?);",
 		"UPDATE [Vouchers] SET [Name] = ?, [Expiry] = ? WHERE [ID] = ?;",
 		"DELETE FROM [Vouchers] WHERE [ID] = ?;",
