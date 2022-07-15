@@ -299,11 +299,8 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 			addVoucher := tx.Stmt(statements[addVoucher])
 			checkVoucher := tx.Stmt(statements[checkVoucherCode])
 			for n, v := range order.Vouchers {
-				var (
-					valid uint8
-					code  = make([]byte, 0, 10)
-				)
-				for valid == 0 {
+				code := make([]byte, 0, 10)
+				for valid := 1; valid == 1; {
 					code = code[:8+rand.Intn(3)]
 					for n := range code {
 						code[n] = codeChars[rand.Intn(len(codeChars))]
