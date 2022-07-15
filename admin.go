@@ -61,6 +61,8 @@ type voucher struct {
 }
 
 type order struct {
+	Name         string    `json:"name"`
+	Price        uint64    `json:"price"`
 	Bookings     []booking `json:"bookings"`
 	Vouchers     []voucher `json:"vouchers"`
 	UsedVouchers []uint64  `json:"usedVouchers"`
@@ -75,6 +77,7 @@ const (
 	removeTreatment
 
 	orderTime
+	getOrders
 	addOrder
 	removeOrder
 	removeOrderBookings
@@ -269,7 +272,7 @@ func (a *admin) HandleRPC(method string, data json.RawMessage) (interface{}, err
 			return nil, err
 		}
 		defer tx.Rollback()
-		r, err := tx.Stmt(statements[addOrder]).Exec(uint64(time.Now().Unix()))
+		r, err := tx.Stmt(statements[addOrder]).Exec(uint64(time.Now().Unix()), order.Name, order.Price)
 		if err != nil {
 			return nil, err
 		}
@@ -536,7 +539,7 @@ func adminInit() (*admin, error) {
 	for _, ct := range []string{
 		"[Settings]([Version] INTEGER DEFAULT 0, [Header] TEXT NOT NULL DEFAULT '', [Footer] TEXT NOT NULL DEFAULT '');",
 		"[Treatments]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Name] TEXT NOT NULL, [Group] TEXT NOT NULL DEFAULT '', [Price] INTEGER NOT NULL, [Description] TEXT NOT NULL DEFAULT '', [Duration] INTEGER NOT NULL);",
-		"[Orders]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Time] INTEGER NOT NULL);",
+		"[Orders]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Time] INTEGER NOT NULL, [Name] TEXT NOT NULL, [Total] INTEGER NOT NULL);",
 		"[Bookings]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Date] INTEGER NOT NULL, [BlockNum] INTEGER NOT NULL, [TotalBlocks] INTEGER NOT NULL, [TreatmentID] INTEGER NOT NULL, [Name] TEXT NOT NULL DEFAULT '', [EmailAddress] NOT NULL DEFAULT '', [PhoneNumber] NOT NULL DEFAULT '', [OrderID] INTEGER NOT NULL);",
 		"[Vouchers]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [CODE] TEXT NOT NULL UNIQUE, [Name] TEXT NOT NULL, [Expiry] INTEGER NOT NULL, [OrderID] INTEGER NOT NULL, [IsValue] BOOLEAN DEFAULT 0 NOT NULL CHECK ([IsValue] IN (0,1)), [Value] INTEGER NOT NULL, [Valid] BOOLEAN DEFAULT 1 NOT NULL CHECK ([Value] IN (0,1)), [OrderUsed] INTEGER NOT NULL DEFAULT 0);",
 	} {
@@ -564,7 +567,8 @@ func adminInit() (*admin, error) {
 
 		// Orders
 		"SELECT [Time] FROM [Orders] WHERE [ID] = ?;",
-		"INSERT INTO [Orders] ([Time]) VALUES (?);",
+		"SELECT [Time], [Name], [Price] FROM [Orders];",
+		"INSERT INTO [Orders] ([Time], [Name], [Price]) VALUES (?, ?, ?);",
 		"DELETE FROM [Orders] WHERE [ID] = ?;",
 		"DELETE FROM [Bookings] WHERE [OrderID] = ?;",
 		"DELETE FROM [Vouchers] WHERE [OrderID] = ?;",
