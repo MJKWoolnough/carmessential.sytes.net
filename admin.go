@@ -90,6 +90,7 @@ const (
 	removeVoucher
 	setVoucherValid
 	checkVoucherCode
+	useVoucher
 
 	totalStmts
 )
@@ -527,7 +528,7 @@ func adminInit() (*admin, error) {
 		"[Treatments]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Name] TEXT NOT NULL, [Group] TEXT NOT NULL DEFAULT '', [Price] INTEGER NOT NULL, [Description] TEXT NOT NULL DEFAULT '', [Duration] INTEGER NOT NULL);",
 		"[Orders]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Time] INTEGER NOT NULL);",
 		"[Bookings]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Date] INTEGER NOT NULL, [BlockNum] INTEGER NOT NULL, [TotalBlocks] INTEGER NOT NULL, [TreatmentID] INTEGER NOT NULL, [Name] TEXT NOT NULL DEFAULT '', [EmailAddress] NOT NULL DEFAULT '', [PhoneNumber] NOT NULL DEFAULT '', [OrderID] INTEGER NOT NULL);",
-		"[Vouchers]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [CODE] TEXT NOT NULL UNIQUE, [Name] TEXT NOT NULL, [Expiry] INTEGER NOT NULL, [OrderID] INTEGER NOT NULL, [IsValue] BOOLEAN DEFAULT 0 NOT NULL CHECK ([IsValue] IN (0,1)), [Value] INTEGER NOT NULL, [Valid] BOOLEAN DEFAULT 1 NOT NULL CHECK ([Value] IN (0,1)));",
+		"[Vouchers]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [CODE] TEXT NOT NULL UNIQUE, [Name] TEXT NOT NULL, [Expiry] INTEGER NOT NULL, [OrderID] INTEGER NOT NULL, [IsValue] BOOLEAN DEFAULT 0 NOT NULL CHECK ([IsValue] IN (0,1)), [Value] INTEGER NOT NULL, [Valid] BOOLEAN DEFAULT 1 NOT NULL CHECK ([Value] IN (0,1)), [OrderUsed] INTEGER NOT NULL DEFAULT 0);",
 	} {
 		if _, err = db.Exec("CREATE TABLE IF NOT EXISTS " + ct); err != nil {
 			return nil, err
@@ -565,12 +566,13 @@ func adminInit() (*admin, error) {
 		"DELETE FROM [Bookings] WHERE [ID] = ?;",
 
 		// Vouchers
-		"SELECT [Code], [Name], [Expiry], [OrderID] [IsValue], [Value], [Valid] FROM [Vouchers] WHERE [ID] = ?;",
+		"SELECT [Code], [Name], [Expiry], [OrderID] [IsValue], [Value], [Valid], [OrderUsed] FROM [Vouchers] WHERE [ID] = ?;",
 		"SELECT [ID], [Name], [Expiry], [OrderID] [IsValue], [Value], [Valid] FROM [Vouchers] WHERE [Code] = ?;",
 		"INSERT INTO [Vouchers] ([Code], [Name], [Expiry], [OrderID] [IsValue], [Value]) VALUES (?, ?, ?, ?, ?, ?);",
 		"UPDATE [Vouchers] SET [Name] = ?, [Expiry] = ? WHERE [ID] = ?;",
 		"DELETE FROM [Vouchers] WHERE [ID] = ?;",
 		"UPDATE [Vouchers] SET [Valid] = ? WHERE [ID] = ?;",
+		"UPDATE [Vouchers] SET [Valid] = 0, [OrderUsed] = ? WHERE [ID] = ?;",
 	} {
 		stmt, err := db.Prepare(ps)
 		if err != nil {
