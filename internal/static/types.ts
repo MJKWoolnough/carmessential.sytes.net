@@ -47,4 +47,9 @@ export type RPCType = {
 	listBookings: (start: number, end: number) => Promise<Booking[]>;
 	updateBooking: (booking: Booking) => Promise<void>;
 	removeBooking: (id: number) => Promise<void>;
+	getVoucher: (id: number) => Promise<Voucher>;
+	getVoucherByCode: (code: string) => Promise<Voucher>;
+	updateVoucher: (id: number, name: string, expiry: number) => Promise<void>;
+	removeVoucher: (id: number) => Promise<void>;
+	setVoucherValid: (id: number, valid: boolean) => Promise<void>;
 }
