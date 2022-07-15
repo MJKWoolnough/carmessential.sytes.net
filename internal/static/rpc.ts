@@ -18,7 +18,7 @@ ready = pageLoad.then(() => WS("/admin")).then(ws => {
 				"setTreatment": (id: number, name: string, group: string, price: number, description: string, duration: number) => arpc.request("setTreatment", {id, name, group, price, description, duration}),
 				"removeTreatment": (id: number) => arpc.request("removeTreatment", id),
 				"getOrderTime": (id: number) => arpc.request("getOrderTime", id),
-				"addOrder": (bookings: Booking[], vouchers: Voucher[], usedVouchers: number[]) => arpc.request("addOrder", {bookings, vouchers, usedVouchers}),
+				"addOrder": (name: string, price: number, bookings: Booking[], vouchers: Voucher[], usedVouchers: number[]) => arpc.request("addOrder", {name, price, bookings, vouchers, usedVouchers}),
 				"removeOrder": (id: number) => arpc.request("removeOrder", id),
 				"listBookings": (start: number, end: number) => arpc.request("listBookings", [start, end]),
 				"updateBooking": (b: Booking) => arpc.request("updateBooking", b),
