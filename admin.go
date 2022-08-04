@@ -565,28 +565,28 @@ func adminInit() (*admin, error) {
 		"SELECT [ID], [Name], [Group], [Price], [Description], [Duration] FROM [Treatments];",
 		"INSERT INTO [Treatments] ([Name], [Group], [Price], [Description], [Duration]) VALUES (?, ?, ?, ?, ?);",
 		"UPDATE [Treatments] SET [Name] = ?, [Group] = ?, [Price] = ?, [Description] = ?, [Duration] = ? WHERE [ID] = ?;",
-		"DELETE FROM [Treatments] WHERE [ID] = ?;",
+		"UPDATE [Treatments] SET [Deleted] = 1 WHERE [ID] = ?;",
 
 		// Orders
 		"SELECT [Time] FROM [Orders] WHERE [ID] = ?;",
 		"SELECT [Time], [Name], [Total] FROM [Orders];",
 		"INSERT INTO [Orders] ([Time], [Name], [Total]) VALUES (?, ?, ?);",
-		"DELETE FROM [Orders] WHERE [ID] = ?;",
-		"DELETE FROM [Bookings] WHERE [OrderID] = ?;",
-		"DELETE FROM [Vouchers] WHERE [OrderID] = ?;",
+		"UPDATE [Orders] SET [Deleted] = 1 WHERE [ID] = ?;",
+		"UPDATE [Bookings] SET [Deleted] = 1 WHERE [OrderID] = ?;",
+		"UPDATE [Vouchers] SET [Deleted] = 1 WHERE [OrderID] = ?;",
 
 		// Bookings
 		"SELECT [ID], [Date], [BlockNum], [TotalBlocks], [TreatmentID], [Name], [EmailAddress], [PhoneNumber], [OrderID] FROM [Bookings] WHERE [Date] BETWEEN ? AND ? ORDER BY [Date] ASC, [BlockNum] ASC;",
 		"INSERT INTO [Bookings] ([Date], [BlockNum], [TotalBlocks], [TreatmentID], [Name], [EmailAddress], [PhoneNumber], [OrderID]) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
 		"UPDATE [Bookings] SET [Date] = ?, [BlockNum] = ?, [TotalBlocks] = ?, [TreatmentID] = ?, [Name] = ?, [EmailAddress] = ?, [PhoneNumber] = ? WHERE [ID] = ?;",
-		"DELETE FROM [Bookings] WHERE [ID] = ?;",
+		"UPDATE [Bookings] Set [Deleted] = 1 WHERE [ID] = ?;",
 
 		// Vouchers
 		"SELECT [Code], [Name], [Expiry], [OrderID], [IsValue], [Value], [Valid], [OrderUsed] FROM [Vouchers] WHERE [ID] = ?;",
 		"SELECT [ID], [Name], [Expiry], [OrderID], [IsValue], [Value], [Valid], [OrderUsed] FROM [Vouchers] WHERE [Code] = ?;",
 		"INSERT INTO [Vouchers] ([Code], [Name], [Expiry], [OrderID], [IsValue], [Value]) VALUES (?, ?, ?, ?, ?, ?);",
 		"UPDATE [Vouchers] SET [Name] = ?, [Expiry] = ? WHERE [ID] = ?;",
-		"DELETE FROM [Vouchers] WHERE [ID] = ?;",
+		"UPDATE [Vouchers] SET [Deleted] = 1 WHERE [ID] = ?;",
 		"UPDATE [Vouchers] SET [Valid] = ? WHERE [ID] = ?;",
 		"UPDATE [Vouchers] SET [Valid] = 0, [OrderUsed] = ? WHERE [ID] = ?;",
 	} {
