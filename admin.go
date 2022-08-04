@@ -569,8 +569,8 @@ func adminInit() (*admin, error) {
 
 		// Orders
 		"SELECT [Time] FROM [Orders] WHERE [ID] = ?;",
-		"SELECT [Time], [Name], [Price] FROM [Orders];",
-		"INSERT INTO [Orders] ([Time], [Name], [Price]) VALUES (?, ?, ?);",
+		"SELECT [Time], [Name], [Total] FROM [Orders];",
+		"INSERT INTO [Orders] ([Time], [Name], [Total]) VALUES (?, ?, ?);",
 		"DELETE FROM [Orders] WHERE [ID] = ?;",
 		"DELETE FROM [Bookings] WHERE [OrderID] = ?;",
 		"DELETE FROM [Vouchers] WHERE [OrderID] = ?;",
