@@ -562,28 +562,28 @@ func adminInit() (*admin, error) {
 		"UPDATE [Settings] SET [Header] = ?, [Footer] = ?;",
 
 		// Treatments
-		"SELECT [ID], [Name], [Group], [Price], [Description], [Duration] FROM [Treatments];",
+		"SELECT [ID], [Name], [Group], [Price], [Description], [Duration] FROM [Treatments] WHERE [Deleted] = 0;",
 		"INSERT INTO [Treatments] ([Name], [Group], [Price], [Description], [Duration]) VALUES (?, ?, ?, ?, ?);",
 		"UPDATE [Treatments] SET [Name] = ?, [Group] = ?, [Price] = ?, [Description] = ?, [Duration] = ? WHERE [ID] = ?;",
 		"UPDATE [Treatments] SET [Deleted] = 1 WHERE [ID] = ?;",
 
 		// Orders
-		"SELECT [Time] FROM [Orders] WHERE [ID] = ?;",
-		"SELECT [Time], [Name], [Total] FROM [Orders];",
+		"SELECT [Time] FROM [Orders] WHERE [ID] = ? AND [Deleted] = 0;",
+		"SELECT [Time], [Name], [Total] FROM [Orders] WHERE [Deleted] = 0;",
 		"INSERT INTO [Orders] ([Time], [Name], [Total]) VALUES (?, ?, ?);",
 		"UPDATE [Orders] SET [Deleted] = 1 WHERE [ID] = ?;",
 		"UPDATE [Bookings] SET [Deleted] = 1 WHERE [OrderID] = ?;",
 		"UPDATE [Vouchers] SET [Deleted] = 1 WHERE [OrderID] = ?;",
 
 		// Bookings
-		"SELECT [ID], [Date], [BlockNum], [TotalBlocks], [TreatmentID], [Name], [EmailAddress], [PhoneNumber], [OrderID] FROM [Bookings] WHERE [Date] BETWEEN ? AND ? ORDER BY [Date] ASC, [BlockNum] ASC;",
+		"SELECT [ID], [Date], [BlockNum], [TotalBlocks], [TreatmentID], [Name], [EmailAddress], [PhoneNumber], [OrderID] FROM [Bookings] WHERE [Deleted] = 0 AND [Date] BETWEEN ? AND ? ORDER BY [Date] ASC, [BlockNum] ASC;",
 		"INSERT INTO [Bookings] ([Date], [BlockNum], [TotalBlocks], [TreatmentID], [Name], [EmailAddress], [PhoneNumber], [OrderID]) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
 		"UPDATE [Bookings] SET [Date] = ?, [BlockNum] = ?, [TotalBlocks] = ?, [TreatmentID] = ?, [Name] = ?, [EmailAddress] = ?, [PhoneNumber] = ? WHERE [ID] = ?;",
 		"UPDATE [Bookings] Set [Deleted] = 1 WHERE [ID] = ?;",
 
 		// Vouchers
-		"SELECT [Code], [Name], [Expiry], [OrderID], [IsValue], [Value], [Valid], [OrderUsed] FROM [Vouchers] WHERE [ID] = ?;",
-		"SELECT [ID], [Name], [Expiry], [OrderID], [IsValue], [Value], [Valid], [OrderUsed] FROM [Vouchers] WHERE [Code] = ?;",
+		"SELECT [Code], [Name], [Expiry], [OrderID], [IsValue], [Value], [Valid], [OrderUsed] FROM [Vouchers] WHERE [ID] = ? AND [Deleted] = 0;",
+		"SELECT [ID], [Name], [Expiry], [OrderID], [IsValue], [Value], [Valid], [OrderUsed] FROM [Vouchers] WHERE [Code] = ? AND [Deleted] = 0;",
 		"INSERT INTO [Vouchers] ([Code], [Name], [Expiry], [OrderID], [IsValue], [Value]) VALUES (?, ?, ?, ?, ?, ?);",
 		"UPDATE [Vouchers] SET [Name] = ?, [Expiry] = ? WHERE [ID] = ?;",
 		"UPDATE [Vouchers] SET [Deleted] = 1 WHERE [ID] = ?;",
