@@ -527,11 +527,11 @@ func adminInit() (*admin, error) {
 	}
 	store, err := sessions.NewCookieStore(key, sessions.HTTPOnly(), sessions.Path("/"), sessions.Name("admin"), sessions.Expiry(time.Hour*24*30))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating cookie store: %w", err)
 	}
 	db, err = sql.Open("sqlite3", adminDB)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error opening sqlite database: %w", err)
 	}
 	a := &admin{
 		username:    user,
@@ -542,26 +542,26 @@ func adminInit() (*admin, error) {
 	a.rpc = websocket.Handler(a.serveConn)
 	loginTemplate, _ = template.New("login").Parse(loginPage)
 	for _, ct := range []string{
-		"[Settings]([Version] INTEGER DEFAULT 0, [Header] TEXT NOT NULL DEFAULT '', [Footer] TEXT NOT NULL DEFAULT '');",
-		"[Treatments]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Name] TEXT NOT NULL, [Group] TEXT NOT NULL DEFAULT '', [Price] INTEGER NOT NULL, [Description] TEXT NOT NULL DEFAULT '', [Duration] INTEGER NOT NULL, [Deleted] BOOLEAN DEFAULT 1 NOT NULL CHECK ([Deleted] IN (0,1)));",
-		"[Orders]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Time] INTEGER NOT NULL, [Name] TEXT NOT NULL, [Total] INTEGER NOT NULL, [Deleted] BOOLEAN DEFAULT 1 NOT NULL CHECK ([Deleted] IN (0,1)));",
-		"[Bookings]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Date] INTEGER NOT NULL, [BlockNum] INTEGER NOT NULL, [TotalBlocks] INTEGER NOT NULL, [TreatmentID] INTEGER NOT NULL, [Name] TEXT NOT NULL DEFAULT '', [EmailAddress] NOT NULL DEFAULT '', [PhoneNumber] NOT NULL DEFAULT '', [OrderID] INTEGER NOT NULL, [Deleted] BOOLEAN DEFAULT 1 NOT NULL CHECK ([Deleted] IN (0,1)));",
-		"[Vouchers]([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [CODE] TEXT NOT NULL UNIQUE, [Name] TEXT NOT NULL, [Expiry] INTEGER NOT NULL, [OrderID] INTEGER NOT NULL, [IsValue] BOOLEAN DEFAULT 0 NOT NULL CHECK ([IsValue] IN (0,1)), [Value] INTEGER NOT NULL, [Valid] BOOLEAN DEFAULT 1 NOT NULL CHECK ([Valid] IN (0,1)), [OrderUsed] INTEGER NOT NULL DEFAULT 0, [Deleted] BOOLEAN DEFAULT 1 NOT NULL CHECK ([Deleted] IN (0,1)));",
+		"CREATE TABLE IF NOT EXISTS [Settings] ([Version] INTEGER DEFAULT 0, [Header] TEXT NOT NULL DEFAULT '', [Footer] TEXT NOT NULL DEFAULT '');",
+		"CREATE TABLE IF NOT EXISTS [Treatments] ([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Name] TEXT NOT NULL, [Group] TEXT NOT NULL DEFAULT '', [Price] INTEGER NOT NULL, [Description] TEXT NOT NULL DEFAULT '', [Duration] INTEGER NOT NULL, [Deleted] BOOLEAN DEFAULT 1 NOT NULL CHECK ([Deleted] IN (0,1)));",
+		"CREATE TABLE IF NOT EXISTS [Orders] ([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Time] INTEGER NOT NULL, [Name] TEXT NOT NULL, [Total] INTEGER NOT NULL, [Deleted] BOOLEAN DEFAULT 1 NOT NULL CHECK ([Deleted] IN (0,1)));",
+		"CREATE TABLE IF NOT EXISTS [Bookings] ([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [Date] INTEGER NOT NULL, [BlockNum] INTEGER NOT NULL, [TotalBlocks] INTEGER NOT NULL, [TreatmentID] INTEGER NOT NULL, [Name] TEXT NOT NULL DEFAULT '', [EmailAddress] NOT NULL DEFAULT '', [PhoneNumber] NOT NULL DEFAULT '', [OrderID] INTEGER NOT NULL, [Deleted] BOOLEAN DEFAULT 1 NOT NULL CHECK ([Deleted] IN (0,1)));",
+		"CREATE TABLE IF NOT EXISTS [Vouchers] ([ID] INTEGER PRIMARY KEY AUTOINCREMENT, [CODE] TEXT NOT NULL UNIQUE, [Name] TEXT NOT NULL, [Expiry] INTEGER NOT NULL, [OrderID] INTEGER NOT NULL, [IsValue] BOOLEAN DEFAULT 0 NOT NULL CHECK ([IsValue] IN (0,1)), [Value] INTEGER NOT NULL, [Valid] BOOLEAN DEFAULT 1 NOT NULL CHECK ([Valid] IN (0,1)), [OrderUsed] INTEGER NOT NULL DEFAULT 0, [Deleted] BOOLEAN DEFAULT 1 NOT NULL CHECK ([Deleted] IN (0,1)));",
 	} {
-		if _, err = db.Exec("CREATE TABLE IF NOT EXISTS " + ct); err != nil {
-			return nil, err
+		if _, err = db.Exec(ct); err != nil {
+			return nil, fmt.Errorf("error creating table with command `%s`: %w", ct, err)
 		}
 	}
 	count := 0
 	if err := db.QueryRow("SELECT COUNT(1) FROM [Settings];").Scan(&count); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error checking settings: %w", err)
 	}
 	if count == 0 {
 		if _, err = db.Exec("INSERT INTO [Settings] ([Version]) VALUES (0);"); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error setting initial db version: %w", err)
 		}
 	} else if err = db.QueryRow("SELECT [Header], [Footer] FROM [Settings];").Scan(&header, &footer); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting header/footer from settings: %w", err)
 	}
 	for n, ps := range []string{
 		"UPDATE [Settings] SET [Header] = ?, [Footer] = ?;",
@@ -597,7 +597,7 @@ func adminInit() (*admin, error) {
 	} {
 		stmt, err := db.Prepare(ps)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error preparing statement `%s`: %w", ps, err)
 		}
 		statements[n] = stmt
 	}
