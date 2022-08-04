@@ -496,6 +496,8 @@ func generatePages(id int64) {
 func init() {
 	if a, err := adminInit(); err == nil {
 		http.Handle("/admin", a)
+	} else {
+		fmt.Fprintln(os.Stderr, err)
 	}
 }
 
