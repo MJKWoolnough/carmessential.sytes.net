@@ -553,7 +553,9 @@ func adminInit() (*admin, error) {
 		}
 	}
 	count := 0
-	db.QueryRow("SELECT COUNT(1) FROM [Settings];").Scan(&count)
+	if err := db.QueryRow("SELECT COUNT(1) FROM [Settings];").Scan(&count); err != nil {
+		return nil, err
+	}
 	if count == 0 {
 		if _, err = db.Exec("INSERT INTO [Settings] ([Version]) VALUES (0);"); err != nil {
 			return nil, err
