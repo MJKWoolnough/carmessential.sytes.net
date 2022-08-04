@@ -163,14 +163,17 @@ func (a *admin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (a *admin) serveConn(wconn *websocket.Conn) {
 	hf.RLock()
-	fmt.Fprintf(wconn, "{\"id\":-2,\"result\":[%q,%q]}", header, footer)
+	_, err := fmt.Fprintf(wconn, "{\"id\":-2,\"result\":[%q,%q]}", header, footer)
 	hf.RUnlock()
-	if atomic.CompareAndSwapUint32(&adminOnline, 0, 1) {
-		wconn.Write(goodAdmin)
-		jsonrpc.New(wconn, a).Handle()
-		atomic.StoreUint32(&adminOnline, 0)
-	} else {
-		wconn.Write(oneAdmin)
+	if err == nil {
+		if atomic.CompareAndSwapUint32(&adminOnline, 0, 1) {
+			if _, err := wconn.Write(goodAdmin); err == nil {
+				jsonrpc.New(wconn, a).Handle()
+				atomic.StoreUint32(&adminOnline, 0)
+			}
+		} else {
+			wconn.Write(oneAdmin)
+		}
 	}
 }
 
