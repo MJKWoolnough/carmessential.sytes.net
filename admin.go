@@ -582,9 +582,9 @@ func adminInit() (*admin, error) {
 		"DELETE FROM [Bookings] WHERE [ID] = ?;",
 
 		// Vouchers
-		"SELECT [Code], [Name], [Expiry], [OrderID] [IsValue], [Value], [Valid], [OrderUsed] FROM [Vouchers] WHERE [ID] = ?;",
-		"SELECT [ID], [Name], [Expiry], [OrderID] [IsValue], [Value], [Valid], [OrderUsed] FROM [Vouchers] WHERE [Code] = ?;",
-		"INSERT INTO [Vouchers] ([Code], [Name], [Expiry], [OrderID] [IsValue], [Value]) VALUES (?, ?, ?, ?, ?, ?);",
+		"SELECT [Code], [Name], [Expiry], [OrderID], [IsValue], [Value], [Valid], [OrderUsed] FROM [Vouchers] WHERE [ID] = ?;",
+		"SELECT [ID], [Name], [Expiry], [OrderID], [IsValue], [Value], [Valid], [OrderUsed] FROM [Vouchers] WHERE [Code] = ?;",
+		"INSERT INTO [Vouchers] ([Code], [Name], [Expiry], [OrderID], [IsValue], [Value]) VALUES (?, ?, ?, ?, ?, ?);",
 		"UPDATE [Vouchers] SET [Name] = ?, [Expiry] = ? WHERE [ID] = ?;",
 		"DELETE FROM [Vouchers] WHERE [ID] = ?;",
 		"UPDATE [Vouchers] SET [Valid] = ? WHERE [ID] = ?;",
