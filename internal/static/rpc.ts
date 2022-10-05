@@ -1,9 +1,8 @@
 import type {Booking, RPCType, Voucher} from './types.js';
 import {WS} from './lib/conn.js';
+import pageLoad from './lib/load.js';
 import {RPC} from './lib/rpc.js';
 import {setHeaderFooter} from './pages.js';
-
-declare const pageLoad: Promise<void>;
 
 export const rpc = {} as RPCType,
 ready = pageLoad.then(() => WS("/admin")).then(ws => {
